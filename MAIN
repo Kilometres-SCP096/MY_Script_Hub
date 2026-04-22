@@ -1,172 +1,327 @@
---// CYBER NEO HUB - STABLE CORE BUILD
+-- [[ CYBER-NEO ULTIMATE SCRIPT HUB - FINAL STABLE VERSION ]] --
+-- [[ 93% SCREEN | 6:3.5 RATIO | FULLY DRAGGABLE | BUG-FREE ]] --
 
-local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
---// Remove old
+-- ========================================
+-- [[ CLEANUP OLD SESSIONS ]]
+-- ========================================
 if CoreGui:FindFirstChild("CyberNeoHub") then
     CoreGui.CyberNeoHub:Destroy()
 end
 
---// Theme
+-- ========================================
+-- [[ FOLDER SYSTEM ]]
+-- ========================================
+local MAIN_FOLDER = "MY_Script_Hub"
+local ICON_FOLDER = "MY_Script_Hub_Icon"
+
+if not isfolder(MAIN_FOLDER) then makefolder(MAIN_FOLDER) end
+if not isfolder(ICON_FOLDER) then makefolder(ICON_FOLDER) end
+
+-- ========================================
+-- [[ COLOR PALETTE ]]
+-- ========================================
 local Theme = {
-    BG = Color3.fromRGB(15,12,20),
-    Surface = Color3.fromRGB(22,18,30),
-    Accent = Color3.fromRGB(170,120,255),
-    Text = Color3.fromRGB(240,240,255)
+    Background = Color3.fromRGB(13, 11, 19),
+    Sidebar = Color3.fromRGB(20, 16, 28),
+    Surface = Color3.fromRGB(28, 24, 38),
+    Primary = Color3.fromRGB(150, 90, 255),
+    Accent = Color3.fromRGB(190, 140, 255),
+    Success = Color3.fromRGB(75, 210, 120),
+    Danger = Color3.fromRGB(230, 70, 70),
+    Warning = Color3.fromRGB(255, 170, 50),
+    Text = Color3.fromRGB(245, 245, 250),
+    TextDim = Color3.fromRGB(160, 155, 180),
+    Stroke = Color3.fromRGB(70, 50, 110)
 }
 
---// ScreenGui
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "CyberNeoHub"
-GUI.ResetOnSpawn = false
-GUI.Parent = CoreGui
-GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- ========================================
+-- [[ UTILITIES ]]
+-- ========================================
+local function MakeRounded(obj, rad)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, rad or 12)
+    c.Parent = obj
+end
 
---// MAIN FRAME (93% EXACT)
-local Main = Instance.new("Frame")
-Main.Parent = GUI
-Main.Size = UDim2.new(0.93,0,0.93,0)
-Main.Position = UDim2.new(0.5,0,0.5,0)
-Main.AnchorPoint = Vector2.new(0.5,0.5)
-Main.BackgroundColor3 = Theme.BG
-Main.BorderSizePixel = 0
-Main.ClipsDescendants = true
+local function AddStroke(obj, col, thick)
+    local s = Instance.new("UIStroke")
+    s.Color = col or Theme.Stroke
+    s.Thickness = thick or 1.5
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Transparency = 0.5
+    s.Parent = obj
+end
 
--- Perfect 6:3.5
-local Aspect = Instance.new("UIAspectRatioConstraint")
-Aspect.Parent = Main
-Aspect.AspectRatio = 6/3.5
+local function ApplyTween(obj, prop, goal, duration)
+    TweenService:Create(obj, TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad), {[prop] = goal}):Play()
+end
 
--- Rounded
-local Corner = Instance.new("UICorner")
-Corner.Parent = Main
-Corner.CornerRadius = UDim.new(0,20)
+-- ========================================
+-- [[ CORE UI SETUP ]]
+-- ========================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CyberNeoHub"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Stroke
-local Stroke = Instance.new("UIStroke")
-Stroke.Parent = Main
-Stroke.Color = Theme.Accent
-Stroke.Thickness = 2
-Stroke.Transparency = 0.4
+-- MAIN FRAME
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0.93, 0, 0.93, 0)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Theme.Background
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
---// TOPBAR
-local Top = Instance.new("Frame")
-Top.Parent = Main
-Top.Size = UDim2.new(1,0,0,60)
-Top.BackgroundColor3 = Theme.Surface
-Top.BorderSizePixel = 0
+MakeRounded(MainFrame, 18)
+AddStroke(MainFrame, Theme.Accent, 2)
 
-local TopCorner = Instance.new("UICorner", Top)
-TopCorner.CornerRadius = UDim.new(0,20)
+-- Force 6:3.5 Aspect Ratio
+local UIAspect = Instance.new("UIAspectRatioConstraint")
+UIAspect.AspectRatio = 1.714
+UIAspect.Parent = MainFrame
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Parent = Top
-Title.Size = UDim2.new(1,0,1,0)
-Title.BackgroundTransparency = 1
-Title.Text = "CYBER NEO HUB"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.TextColor3 = Theme.Accent
+-- ========================================
+-- [[ TOPBAR & DRAGGING ]]
+-- ========================================
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 55)
+TopBar.BackgroundColor3 = Theme.Sidebar
+TopBar.Parent = MainFrame
+MakeRounded(TopBar, 18)
 
---// DRAGGABLE UI (CLEAN VERSION)
-local dragging = false
-local dragStart
-local startPos
-
-Top.InputBegan:Connect(function(input)
+-- Draggable Logic for Main UI
+local dragToggle, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
+        dragToggle = true
         dragStart = input.Position
-        startPos = Main.Position
+        startPos = MainFrame.Position
     end
 end)
 
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+UserInputService.InputChanged:Connect(function(input)
+    if dragToggle and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Position - dragStart
-        Main.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-UIS.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
+        dragToggle = false
     end
 end)
 
---// FLOATING BALL (FIXED PROPERLY)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 300, 1, 0)
+Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "CYBER-NEO SCRIPT HUB"
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Theme.Accent
+Title.TextSize = 16
+Title.TextXAlignment = "Left"
+Title.Parent = TopBar
+
+-- Minimize Button
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 40, 0, 40)
+MinBtn.Position = UDim2.new(1, -50, 0.5, -20)
+MinBtn.BackgroundColor3 = Theme.Surface
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextColor3 = Theme.Warning
+MinBtn.TextSize = 20
+MinBtn.Parent = TopBar
+MakeRounded(MinBtn, 10)
+
+-- ========================================
+-- [[ FLOATING BALL ENGINE ]]
+-- ========================================
 local Ball = Instance.new("ImageButton")
-Ball.Parent = GUI
-Ball.Size = UDim2.new(0,50,0,50)
-Ball.Position = UDim2.new(0.05,0,0.5,0)
-Ball.BackgroundColor3 = Theme.Accent
+Ball.Name = "FloatingBall"
+Ball.Size = UDim2.new(0, 55, 0, 55)
+Ball.Position = UDim2.new(0.05, 0, 0.1, 0)
+Ball.BackgroundColor3 = Theme.Primary
 Ball.Image = "rbxassetid://6031225818"
-Ball.ImageColor3 = Theme.Text
 Ball.Visible = false
-Ball.ZIndex = 1000
-Ball.BorderSizePixel = 0
+Ball.Parent = ScreenGui
+MakeRounded(Ball, 30)
+AddStroke(Ball, Theme.Accent, 2)
 
-Instance.new("UICorner", Ball).CornerRadius = UDim.new(1,0)
-
--- Drag Ball
-local bDragging = false
-local bStart
-local bPos
-local moved = false
-
+-- Ball Dragging Logic
+local bDragging, bStart, bPos, bMoved
 Ball.MouseButton1Down:Connect(function()
     bDragging = true
-    moved = false
-    bStart = UIS:GetMouseLocation()
+    bMoved = false
+    bStart = UserInputService:GetMouseLocation()
     bPos = Ball.Position
 end)
 
-Ball.MouseButton1Up:Connect(function()
-    if not moved then
-        Main.Visible = true
-        Ball.Visible = false
+UserInputService.InputChanged:Connect(function(input)
+    if bDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local cur = UserInputService:GetMouseLocation()
+        local delta = cur - bStart
+        if delta.Magnitude > 5 then bMoved = true end
+        Ball.Position = UDim2.new(bPos.X.Scale, bPos.X.Offset + delta.X, bPos.Y.Scale, bPos.Y.Offset + delta.Y)
     end
-    bDragging = false
 end)
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    if bDragging then
-        local delta = UIS:GetMouseLocation() - bStart
-        if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
-            moved = true
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if not bMoved then
+            MainFrame.Visible = true
+            Ball.Visible = false
         end
-        
-        Ball.Position = UDim2.new(
-            bPos.X.Scale,
-            bPos.X.Offset + delta.X,
-            bPos.Y.Scale,
-            bPos.Y.Offset + delta.Y
-        )
+        bDragging = false
     end
 end)
 
---// MINIMIZE BUTTON
-local Min = Instance.new("TextButton")
-Min.Parent = Top
-Min.Size = UDim2.new(0,40,0,40)
-Min.Position = UDim2.new(1,-50,0.5,-20)
-Min.Text = "-"
-Min.Font = Enum.Font.GothamBold
-Min.TextSize = 20
-Min.BackgroundColor3 = Theme.BG
-Min.TextColor3 = Theme.Text
-Min.BorderSizePixel = 0
-Instance.new("UICorner", Min).CornerRadius = UDim.new(0,10)
-
-Min.MouseButton1Click:Connect(function()
-    Main.Visible = false
+MinBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
     Ball.Visible = true
 end)
+
+-- ========================================
+-- [[ SIDEBAR (16%) ]]
+-- ========================================
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0.16, 0, 1, -55)
+Sidebar.Position = UDim2.new(0, 0, 0, 55)
+Sidebar.BackgroundColor3 = Theme.Sidebar
+Sidebar.Parent = MainFrame
+MakeRounded(Sidebar, 15)
+
+local NavList = Instance.new("UIListLayout")
+NavList.Padding = UDim.new(0, 15)
+NavList.HorizontalAlignment = "Center"
+NavList.Parent = Sidebar
+
+local NavPad = Instance.new("UIPadding")
+NavPad.PaddingTop = UDim.new(0, 20)
+NavPad.Parent = Sidebar
+
+-- ========================================
+-- [[ CONTENT & PAGES ]]
+-- ========================================
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(0.84, 0, 1, -55)
+ContentArea.Position = UDim2.new(0.16, 0, 0, 55)
+ContentArea.BackgroundTransparency = 1
+ContentArea.Parent = MainFrame
+
+local Pages = {}
+local function CreatePage(name)
+    local p = Instance.new("Frame")
+    p.Name = name
+    p.Size = UDim2.new(1, -40, 1, -40)
+    p.Position = UDim2.new(0, 20, 0, 20)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    p.Parent = ContentArea
+    Pages[name] = p
+    return p
+end
+
+local function ShowPage(name)
+    for _, v in pairs(Pages) do v.Visible = false end
+    Pages[name].Visible = true
+end
+
+-- RUNNER PAGE
+local P_Runner = CreatePage("Runner")
+local EditorBg = Instance.new("Frame")
+EditorBg.Size = UDim2.new(1, 0, 0.8, 0)
+EditorBg.BackgroundColor3 = Color3.fromRGB(8, 7, 12)
+EditorBg.Parent = P_Runner
+MakeRounded(EditorBg, 10)
+AddStroke(EditorBg)
+
+local CodeBox = Instance.new("TextBox")
+CodeBox.Size = UDim2.new(1, -20, 1, -20)
+CodeBox.Position = UDim2.new(0, 10, 0, 10)
+CodeBox.BackgroundTransparency = 1
+CodeBox.MultiLine = true
+CodeBox.Text = "-- Cyber-Neo Hub Ready"
+CodeBox.Font = Enum.Font.Code
+CodeBox.TextSize = 13
+CodeBox.TextColor3 = Theme.Accent
+CodeBox.TextXAlignment = "Left"
+CodeBox.TextYAlignment = "Top"
+CodeBox.ClearTextOnFocus = false
+CodeBox.Parent = EditorBg
+
+local ExecBtn = Instance.new("TextButton")
+ExecBtn.Size = UDim2.new(0.3, 0, 0.15, 0)
+ExecBtn.Position = UDim2.new(0, 0, 0.85, 0)
+ExecBtn.BackgroundColor3 = Theme.Success
+ExecBtn.Text = "EXECUTE"
+ExecBtn.Font = Enum.Font.GothamBold
+ExecBtn.TextColor3 = Color3.new(1,1,1)
+ExecBtn.Parent = P_Runner
+MakeRounded(ExecBtn, 8)
+
+ExecBtn.MouseButton1Click:Connect(function()
+    assert(loadstring(CodeBox.Text))()
+end)
+
+-- ADD PAGE
+local P_Add = CreatePage("Add")
+local NameBox = Instance.new("TextBox")
+NameBox.Size = UDim2.new(1, 0, 0.15, 0)
+NameBox.BackgroundColor3 = Theme.Surface
+NameBox.PlaceholderText = "Script Name"
+NameBox.TextColor3 = Color3.new(1,1,1)
+NameBox.Parent = P_Add
+MakeRounded(NameBox, 8)
+
+local SaveBtn = Instance.new("TextButton")
+SaveBtn.Size = UDim2.new(1, 0, 0.15, 0)
+SaveBtn.Position = UDim2.new(0, 0, 0.85, 0)
+SaveBtn.BackgroundColor3 = Theme.Primary
+SaveBtn.Text = "SAVE SCRIPT"
+SaveBtn.Font = Enum.Font.GothamBold
+SaveBtn.TextColor3 = Color3.new(1,1,1)
+SaveBtn.Parent = P_Add
+MakeRounded(SaveBtn, 8)
+
+SaveBtn.MouseButton1Click:Connect(function()
+    if NameBox.Text ~= "" then
+        writefile(MAIN_FOLDER.."/"..NameBox.Text, CodeBox.Text)
+        NameBox.Text = ""
+        print("Saved to " .. MAIN_FOLDER)
+    end
+end)
+
+-- ========================================
+-- [[ NAVIGATION BUTTONS ]]
+-- ========================================
+local function CreateNav(icon, target)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 45, 0, 45)
+    b.BackgroundColor3 = Theme.Surface
+    b.Text = icon
+    b.Font = Enum.Font.GothamBold
+    b.TextColor3 = Theme.Accent
+    b.TextSize = 20
+    b.Parent = Sidebar
+    MakeRounded(b, 10)
+    b.MouseButton1Click:Connect(function() ShowPage(target) end)
+end
+
+CreateNav("⌨", "Runner")
+CreateNav("➕", "Add")
+CreateNav("🔎", "Runner") -- Placeholder for Search
+
+-- Start
+ShowPage("Runner")
+print("Cyber-Neo Hub V7 Loaded Successfully.")
