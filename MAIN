@@ -1,5 +1,5 @@
--- [[ CYBER-NEO ULTIMATE SCRIPT HUB ]] --
--- [[ OVER 1000 LINES | PROFESSIONAL UI/UX ]] --
+-- [[ CYBER-NEO ULTIMATE SCRIPT HUB - FIXED VERSION ]] --
+-- [[ 6:3.5 ASPECT RATIO | 88% SCREEN SIZE | FIXED DRAGGING ]] --
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -173,7 +173,7 @@ local function CreateIconButton(parent, iconId, callback)
     local stroke = CreateStroke(button, Theme.Border, 1.5, 0.8)
     
     button.MouseEnter:Connect(function()
-        TweenProperty(button.ImageColor3, "ImageColor3", Theme.Accent)
+        TweenProperty(button, "ImageColor3", Theme.Accent)
         TweenProperty(button, "BackgroundColor3", Theme.Surface:Lerp(Theme.Primary, 0.1))
         TweenProperty(stroke, "Transparency", 0.3)
     end)
@@ -202,80 +202,75 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- [[ FLOATING TOGGLE BALL ]]
+-- [[ FLOATING TOGGLE BALL - FIXED DRAGGING ]]
 -- ========================================
 
-local FloatingBall = Instance.new("Frame", ScreenGui)
+local FloatingBall = Instance.new("ImageButton", ScreenGui)
 FloatingBall.Name = "FloatingBall"
 FloatingBall.Size = UDim2.new(0, 70, 0, 70)
 FloatingBall.Position = UDim2.new(0.05, 0, 0.5, -35)
-FloatingBall.BackgroundTransparency = 1
+FloatingBall.BackgroundColor3 = Theme.Primary
+FloatingBall.Image = "rbxassetid://6031225818"
+FloatingBall.ImageColor3 = Theme.Text
+FloatingBall.BorderSizePixel = 0
 FloatingBall.Visible = false
+FloatingBall.Active = true
+FloatingBall.Draggable = false
 
-local BallButton = Instance.new("ImageButton", FloatingBall)
-BallButton.Size = UDim2.new(1, 0, 1, 0)
-BallButton.BackgroundColor3 = Theme.Primary
-BallButton.Image = "rbxassetid://6031225818"
-BallButton.ImageColor3 = Theme.Text
-BallButton.BorderSizePixel = 0
-
-CreateCorner(BallButton, 35)
-local ballStroke = CreateStroke(BallButton, Theme.Glow, 3, 0.3)
-CreateGradient(BallButton, 45, Theme.Primary, Theme.Secondary)
+CreateCorner(FloatingBall, 35)
+local ballStroke = CreateStroke(FloatingBall, Theme.Glow, 3, 0.3)
+CreateGradient(FloatingBall, 45, Theme.Primary, Theme.Secondary)
 
 -- Pulsing Animation
-local ballPulse
-ballPulse = RunService.RenderStepped:Connect(function()
-    if FloatingBall.Visible then
-        ballStroke.Thickness = 3 + math.sin(tick() * 3) * 1
-        ballStroke.Transparency = 0.3 + math.sin(tick() * 3) * 0.2
+spawn(function()
+    while wait() do
+        if FloatingBall.Visible then
+            ballStroke.Thickness = 3 + math.sin(tick() * 3) * 1
+            ballStroke.Transparency = 0.3 + math.sin(tick() * 3) * 0.2
+        end
     end
 end)
 
--- Dragging System
+-- FIXED DRAGGING SYSTEM
 local dragging = false
-local dragInput, mousePos, framePos
+local dragStart = nil
+local startPos = nil
 
-BallButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = FloatingBall.Position
-    end
+FloatingBall.MouseButton1Down:Connect(function()
+    dragging = true
+    dragStart = UserInputService:GetMouseLocation()
+    startPos = FloatingBall.Position
 end)
 
-BallButton.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if dragging and dragInput then
-        local delta = dragInput.Position - mousePos
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local currentMouse = UserInputService:GetMouseLocation()
+        local delta = currentMouse - dragStart
+        
         FloatingBall.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
         )
     end
 end)
 
 -- ========================================
--- [[ MAIN UI FRAME ]]
+-- [[ MAIN UI FRAME - FIXED SIZE (88% + 6:3.5 RATIO) ]]
 -- ========================================
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 750, 0, 500)
-MainFrame.Position = UDim2.new(0.5, -375, 0.5, -250)
+MainFrame.Size = UDim2.new(0.88, 0, 0.88, 0)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -284,8 +279,9 @@ CreateCorner(MainFrame, 12)
 CreateStroke(MainFrame, Theme.Glow, 2, 0.5)
 CreateShadow(MainFrame)
 
+-- ASPECT RATIO 6:3.5 = 1.714
 local MainAspect = Instance.new("UIAspectRatioConstraint", MainFrame)
-MainAspect.AspectRatio = 1.5
+MainAspect.AspectRatio = 1.714
 
 -- ========================================
 -- [[ TOPBAR ]]
@@ -320,7 +316,7 @@ VersionLabel.Size = UDim2.new(0, 100, 1, 0)
 VersionLabel.Position = UDim2.new(0, 270, 0, 0)
 VersionLabel.BackgroundTransparency = 1
 VersionLabel.Font = Enum.Font.Gotham
-VersionLabel.Text = "v4.0"
+VersionLabel.Text = "v5.0 FIXED"
 VersionLabel.TextColor3 = Theme.TextDim
 VersionLabel.TextSize = 11
 
@@ -352,9 +348,11 @@ MinimizeButton.MouseButton1Click:Connect(function()
     FloatingBall.Visible = true
 end)
 
-BallButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    FloatingBall.Visible = false
+FloatingBall.MouseButton1Click:Connect(function()
+    if not dragging then
+        MainFrame.Visible = true
+        FloatingBall.Visible = false
+    end
 end)
 
 -- ========================================
@@ -425,10 +423,6 @@ local function SwitchPage(pageName)
         if name == pageName then
             page.Visible = true
             ActivePage = name
-            
-            -- Fade in animation
-            page.BackgroundTransparency = 1
-            TweenProperty(page, "BackgroundTransparency", 1, 0.2)
         else
             page.Visible = false
         end
@@ -487,7 +481,7 @@ CodeEditor.Size = UDim2.new(1, -10, 1, 0)
 CodeEditor.Position = UDim2.new(0, 5, 0, 0)
 CodeEditor.BackgroundTransparency = 1
 CodeEditor.Font = Enum.Font.Code
-CodeEditor.Text = "-- Cyber-Neo Script Hub v4.0\n-- Advanced Script Execution Environment\n\nprint('Hello, World!')"
+CodeEditor.Text = "-- Cyber-Neo Script Hub v5.0\n-- Fixed 88% Screen Size + 6:3.5 Ratio\n-- Draggable Ball Fixed\n\nprint('Hello, World!')"
 CodeEditor.TextColor3 = Theme.Accent
 CodeEditor.TextSize = 13
 CodeEditor.TextXAlignment = "Left"
@@ -499,7 +493,6 @@ local EditorPadding = Instance.new("UIPadding", CodeEditor)
 EditorPadding.PaddingLeft = UDim.new(0, 5)
 EditorPadding.PaddingTop = UDim.new(0, 5)
 
--- Syntax Highlighting Effect (Simple)
 CodeEditor:GetPropertyChangedSignal("Text"):Connect(function()
     local lines = {}
     for line in CodeEditor.Text:gmatch("[^\n]+") do
@@ -575,6 +568,8 @@ CodeInputScroll.Position = UDim2.new(0, 5, 0, 5)
 CodeInputScroll.BackgroundTransparency = 1
 CodeInputScroll.BorderSizePixel = 0
 CodeInputScroll.ScrollBarThickness = 4
+CodeInputScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+CodeInputScroll.AutomaticCanvasSize = "Y"
 
 local CodeInput = CreateTextBox(CodeInputScroll, "Paste your script code here...", true)
 CodeInput.Size = UDim2.new(1, 0, 1, 0)
@@ -662,7 +657,6 @@ local function RefreshSavedScripts()
         runBtn.Position = UDim2.new(1, -120, 0.5, -17.5)
         
         local deleteBtn = CreateButton(scriptCard, "🗑", function()
-            -- Create confirmation popup
             local popup = Instance.new("Frame", ScreenGui)
             popup.Size = UDim2.new(0, 300, 0, 150)
             popup.Position = UDim2.new(0.5, -150, 0.5, -75)
@@ -753,6 +747,8 @@ SearchResults.Position = UDim2.new(0, 0, 0, 95)
 SearchResults.BackgroundTransparency = 1
 SearchResults.BorderSizePixel = 0
 SearchResults.ScrollBarThickness = 4
+SearchResults.CanvasSize = UDim2.new(0, 0, 0, 0)
+SearchResults.AutomaticCanvasSize = "Y"
 
 local SearchLayout = Instance.new("UIListLayout", SearchResults)
 SearchLayout.Padding = UDim.new(0, 8)
@@ -809,7 +805,6 @@ local function CreateNavIcon(iconId, tooltip, targetPage, order)
     btn.MouseButton1Click:Connect(function()
         SwitchPage(targetPage)
         
-        -- Update active state
         for _, navBtn in pairs(navButtons) do
             TweenProperty(navBtn, "BackgroundColor3", Theme.Surface)
             TweenProperty(navBtn, "ImageColor3", Theme.TextDim)
@@ -843,7 +838,6 @@ SaveButton.MouseButton1Click:Connect(function()
         NameInput.Text = ""
         CodeInput.Text = ""
         
-        -- Success notification
         local notif = Instance.new("Frame", ScreenGui)
         notif.Size = UDim2.new(0, 250, 0, 60)
         notif.Position = UDim2.new(1, -270, 0, 20)
@@ -878,10 +872,11 @@ end)
 SwitchPage("Runner")
 RefreshSavedScripts()
 
--- Set first nav button as active
 TweenProperty(navButtons[3], "BackgroundColor3", Theme.Primary:Lerp(Theme.Surface, 0.5))
 TweenProperty(navButtons[3], "ImageColor3", Theme.Accent)
 
-print("🚀 Cyber-Neo Script Hub v4.0 Loaded Successfully!")
+print("🚀 Cyber-Neo Script Hub v5.0 FIXED!")
+print("✅ 88% Screen Size")
+print("✅ 6:3.5 Aspect Ratio")
+print("✅ Draggable Ball Fixed")
 print("📂 Main Folder:", MAIN_FOLDER)
-print("🎨 Icon Folder:", ICON_FOLDER)
