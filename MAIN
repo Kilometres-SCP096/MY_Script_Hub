@@ -1,1263 +1,172 @@
--- [[ CYBER-NEO ULTIMATE SCRIPT HUB - PERFECTION VERSION ]] --
--- [[ 1500+ LINES | 93% SCREEN | PERFECT UI/UX | ALL BUGS FIXED ]] --
+--// CYBER NEO HUB - STABLE CORE BUILD
 
+local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
 
--- ========================================
--- [[ FOLDER SYSTEM ]]
--- ========================================
-local MAIN_FOLDER = "MY_Script_Hub"
-local ICON_FOLDER = "MY_Script_Hub_Icon"
-
-if not isfolder(MAIN_FOLDER) then makefolder(MAIN_FOLDER) end
-if not isfolder(ICON_FOLDER) then 
-    makefolder(ICON_FOLDER)
-    writefile(ICON_FOLDER.."/MainIcon.png", "")
-    writefile(ICON_FOLDER.."/SearchIcon.png", "")
-    writefile(ICON_FOLDER.."/AddIcon.png", "")
-    writefile(ICON_FOLDER.."/RunnerIcon.png", "")
-    writefile(ICON_FOLDER.."/SavedIcon.png", "")
-    writefile(ICON_FOLDER.."/CloseIcon.png", "")
+--// Remove old
+if CoreGui:FindFirstChild("CyberNeoHub") then
+    CoreGui.CyberNeoHub:Destroy()
 end
 
--- ========================================
--- [[ COLOR THEME - CYBER PURPLE ]]
--- ========================================
+--// Theme
 local Theme = {
-    Background = Color3.fromRGB(10, 8, 15),
-    Sidebar = Color3.fromRGB(18, 14, 25),
-    Surface = Color3.fromRGB(25, 20, 35),
-    Primary = Color3.fromRGB(140, 80, 255),
-    Secondary = Color3.fromRGB(100, 50, 200),
-    Accent = Color3.fromRGB(180, 120, 255),
-    Success = Color3.fromRGB(80, 200, 120),
-    Danger = Color3.fromRGB(220, 80, 80),
-    Warning = Color3.fromRGB(255, 180, 60),
-    Text = Color3.fromRGB(245, 245, 250),
-    TextDim = Color3.fromRGB(160, 150, 180),
-    Border = Color3.fromRGB(60, 40, 100),
-    Glow = Color3.fromRGB(200, 140, 255),
+    BG = Color3.fromRGB(15,12,20),
+    Surface = Color3.fromRGB(22,18,30),
+    Accent = Color3.fromRGB(170,120,255),
+    Text = Color3.fromRGB(240,240,255)
 }
 
--- ========================================
--- [[ UTILITY FUNCTIONS ]]
--- ========================================
+--// ScreenGui
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "CyberNeoHub"
+GUI.ResetOnSpawn = false
+GUI.Parent = CoreGui
+GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local function CreateCorner(parent, radius)
-    local corner = Instance.new("UICorner", parent)
-    corner.CornerRadius = UDim.new(0, radius or 12)
-    return corner
-end
+--// MAIN FRAME (93% EXACT)
+local Main = Instance.new("Frame")
+Main.Parent = GUI
+Main.Size = UDim2.new(0.93,0,0.93,0)
+Main.Position = UDim2.new(0.5,0,0.5,0)
+Main.AnchorPoint = Vector2.new(0.5,0.5)
+Main.BackgroundColor3 = Theme.BG
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
 
-local function CreateStroke(parent, color, thickness, transparency)
-    local stroke = Instance.new("UIStroke", parent)
-    stroke.Color = color or Theme.Border
-    stroke.Thickness = thickness or 1
-    stroke.Transparency = transparency or 0.5
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    return stroke
-end
+-- Perfect 6:3.5
+local Aspect = Instance.new("UIAspectRatioConstraint")
+Aspect.Parent = Main
+Aspect.AspectRatio = 6/3.5
 
-local function CreateGradient(parent, rotation, c1, c2)
-    local gradient = Instance.new("UIGradient", parent)
-    gradient.Rotation = rotation or 90
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, c1 or Theme.Primary),
-        ColorSequenceKeypoint.new(1, c2 or Theme.Secondary)
-    })
-    return gradient
-end
+-- Rounded
+local Corner = Instance.new("UICorner")
+Corner.Parent = Main
+Corner.CornerRadius = UDim.new(0,20)
 
-local function CreateShadow(parent)
-    local shadow = Instance.new("ImageLabel", parent)
-    shadow.Name = "Shadow"
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.7
-    shadow.Size = UDim2.new(1, 40, 1, 40)
-    shadow.Position = UDim2.new(0, -20, 0, -20)
-    shadow.ZIndex = parent.ZIndex - 1
-    return shadow
-end
+-- Stroke
+local Stroke = Instance.new("UIStroke")
+Stroke.Parent = Main
+Stroke.Color = Theme.Accent
+Stroke.Thickness = 2
+Stroke.Transparency = 0.4
 
-local function TweenProperty(object, property, endValue, duration)
-    local info = TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(object, info, {[property] = endValue})
-    tween:Play()
-    return tween
-end
+--// TOPBAR
+local Top = Instance.new("Frame")
+Top.Parent = Main
+Top.Size = UDim2.new(1,0,0,60)
+Top.BackgroundColor3 = Theme.Surface
+Top.BorderSizePixel = 0
 
-local function CreateButton(parent, text, callback, style)
-    style = style or "Primary"
-    
-    local button = Instance.new("TextButton", parent)
-    button.BackgroundColor3 = Theme[style] or Theme.Primary
-    button.BorderSizePixel = 0
-    button.Font = Enum.Font.GothamBold
-    button.Text = text
-    button.TextColor3 = Theme.Text
-    button.TextSize = 13
-    button.AutoButtonColor = false
-    
-    CreateCorner(button, 8)
-    local stroke = CreateStroke(button, Theme.Glow, 1.5, 0.7)
-    
-    local originalColor = button.BackgroundColor3
-    
-    button.MouseEnter:Connect(function()
-        TweenProperty(button, "BackgroundColor3", originalColor:Lerp(Color3.new(1,1,1), 0.15))
-        TweenProperty(stroke, "Transparency", 0.2)
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenProperty(button, "BackgroundColor3", originalColor)
-        TweenProperty(stroke, "Transparency", 0.7)
-    end)
-    
-    button.MouseButton1Down:Connect(function()
-        TweenProperty(button, "BackgroundColor3", originalColor:Lerp(Color3.new(0,0,0), 0.2))
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        TweenProperty(button, "BackgroundColor3", originalColor)
-    end)
-    
-    if callback then
-        button.MouseButton1Click:Connect(callback)
-    end
-    
-    return button
-end
+local TopCorner = Instance.new("UICorner", Top)
+TopCorner.CornerRadius = UDim.new(0,20)
 
-local function CreateTextBox(parent, placeholder, multiline)
-    local textbox = Instance.new("TextBox", parent)
-    textbox.BackgroundColor3 = Theme.Surface
-    textbox.BorderSizePixel = 0
-    textbox.Font = Enum.Font.Gotham
-    textbox.PlaceholderText = placeholder or ""
-    textbox.Text = ""
-    textbox.TextColor3 = Theme.Text
-    textbox.TextSize = 12
-    textbox.ClearTextOnFocus = false
-    textbox.MultiLine = multiline or false
-    textbox.TextXAlignment = multiline and "Left" or "Center"
-    textbox.TextYAlignment = multiline and "Top" or "Center"
-    
-    CreateCorner(textbox, 8)
-    CreateStroke(textbox, Theme.Border, 1, 0.6)
-    
-    local padding = Instance.new("UIPadding", textbox)
-    padding.PaddingLeft = UDim.new(0, 10)
-    padding.PaddingRight = UDim.new(0, 10)
-    padding.PaddingTop = UDim.new(0, multiline and 10 or 0)
-    padding.PaddingBottom = UDim.new(0, multiline and 10 or 0)
-    
-    return textbox
-end
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Parent = Top
+Title.Size = UDim2.new(1,0,1,0)
+Title.BackgroundTransparency = 1
+Title.Text = "CYBER NEO HUB"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.TextColor3 = Theme.Accent
 
-local function CreateIconButton(parent, iconId, callback)
-    local button = Instance.new("ImageButton", parent)
-    button.BackgroundColor3 = Theme.Surface
-    button.BorderSizePixel = 0
-    button.Image = iconId
-    button.ImageColor3 = Theme.TextDim
-    button.AutoButtonColor = false
-    
-    CreateCorner(button, 10)
-    local stroke = CreateStroke(button, Theme.Border, 1.5, 0.8)
-    
-    button.MouseEnter:Connect(function()
-        TweenProperty(button, "ImageColor3", Theme.Accent)
-        TweenProperty(button, "BackgroundColor3", Theme.Surface:Lerp(Theme.Primary, 0.1))
-        TweenProperty(stroke, "Transparency", 0.3)
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenProperty(button, "ImageColor3", Theme.TextDim)
-        TweenProperty(button, "BackgroundColor3", Theme.Surface)
-        TweenProperty(stroke, "Transparency", 0.8)
-    end)
-    
-    if callback then
-        button.MouseButton1Click:Connect(callback)
-    end
-    
-    return button
-end
+--// DRAGGABLE UI (CLEAN VERSION)
+local dragging = false
+local dragStart
+local startPos
 
--- ========================================
--- [[ SCREEN GUI SETUP ]]
--- ========================================
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CyberNeoHub"
-ScreenGui.Parent = CoreGui
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- ========================================
--- [[ FLOATING TOGGLE BALL - PROPER SIZE ]]
--- ========================================
-
-local FloatingBall = Instance.new("ImageButton", ScreenGui)
-FloatingBall.Name = "FloatingBall"
-FloatingBall.Size = UDim2.new(0, 55, 0, 55) -- SMALLER SIZE
-FloatingBall.Position = UDim2.new(0.05, 0, 0.45, 0)
-FloatingBall.BackgroundColor3 = Theme.Primary
-FloatingBall.Image = "rbxassetid://6031225818"
-FloatingBall.ImageColor3 = Theme.Text
-FloatingBall.BorderSizePixel = 0
-FloatingBall.Visible = false
-FloatingBall.ZIndex = 10000
-
-CreateCorner(FloatingBall, 28) -- PERFECT CIRCLE
-local ballStroke = CreateStroke(FloatingBall, Theme.Glow, 2.5, 0.3)
-CreateGradient(FloatingBall, 45, Theme.Primary, Theme.Secondary)
-
--- Pulsing Animation
-spawn(function()
-    while true do
-        if FloatingBall.Visible then
-            ballStroke.Thickness = 2.5 + math.sin(tick() * 3) * 0.8
-            ballStroke.Transparency = 0.3 + math.sin(tick() * 3) * 0.15
-        end
-        RunService.RenderStepped:Wait()
+Top.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
     end
 end)
 
--- PERFECT DRAGGING SYSTEM
-local isDragging = false
-local dragStartPos = nil
-local ballStartPos = nil
-local hasMoved = false
-
-FloatingBall.MouseButton1Down:Connect(function()
-    isDragging = true
-    hasMoved = false
-    dragStartPos = UserInputService:GetMouseLocation()
-    ballStartPos = FloatingBall.Position
-end)
-
-FloatingBall.MouseButton1Up:Connect(function()
-    if not hasMoved then
-        -- Click action - show main UI
-        MainFrame.Visible = true
-        FloatingBall.Visible = false
-    end
-    isDragging = false
-    hasMoved = false
-end)
-
-RunService.RenderStepped:Connect(function()
-    if isDragging then
-        local currentMousePos = UserInputService:GetMouseLocation()
-        local delta = currentMousePos - dragStartPos
-        
-        -- Check if moved more than 5 pixels
-        if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
-            hasMoved = true
-        end
-        
-        FloatingBall.Position = UDim2.new(
-            ballStartPos.X.Scale,
-            ballStartPos.X.Offset + delta.X,
-            ballStartPos.Y.Scale,
-            ballStartPos.Y.Offset + delta.Y
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
         )
     end
 end)
 
--- ========================================
--- [[ MAIN UI FRAME - 93% SCREEN SIZE ]]
--- ========================================
-
--- Get viewport size for proper 93% calculation
-local Camera = workspace.CurrentCamera
-local ViewportSize = Camera.ViewportSize
-
--- Calculate 93% of screen
-local uiWidth = ViewportSize.X * 0.93
-local uiHeight = ViewportSize.Y * 0.93
-
--- Adjust for aspect ratio 6:3.5
-local aspectRatio = 6 / 3.5
-if uiWidth / uiHeight > aspectRatio then
-    uiWidth = uiHeight * aspectRatio
-else
-    uiHeight = uiWidth / aspectRatio
-end
-
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, uiWidth, 0, uiHeight)
-MainFrame.Position = UDim2.new(0.5, -uiWidth/2, 0.5, -uiHeight/2)
-MainFrame.BackgroundColor3 = Theme.Background
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-
-CreateCorner(MainFrame, 15) -- ROUNDED CORNERS
-CreateStroke(MainFrame, Theme.Glow, 2, 0.5)
-CreateShadow(MainFrame)
-
--- ========================================
--- [[ MAKE UI DRAGGABLE ]]
--- ========================================
-
-local draggingUI = false
-local dragInputUI = nil
-local dragStartUI = nil
-local startPosUI = nil
-
-local function MakeUIDraggable(frame, dragHandle)
-    dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingUI = true
-            dragStartUI = input.Position
-            startPosUI = frame.Position
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInputUI = input
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingUI = false
-        end
-    end)
-    
-    RunService.RenderStepped:Connect(function()
-        if draggingUI and dragInputUI then
-            local delta = dragInputUI.Position - dragStartUI
-            frame.Position = UDim2.new(
-                startPosUI.X.Scale,
-                startPosUI.X.Offset + delta.X,
-                startPosUI.Y.Scale,
-                startPosUI.Y.Offset + delta.Y
-            )
-        end
-    end)
-end
-
--- ========================================
--- [[ TOPBAR - DRAGGABLE ]]
--- ========================================
-
-local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 55)
-TopBar.BackgroundColor3 = Theme.Sidebar
-TopBar.BorderSizePixel = 0
-
--- Top corners only rounded
-local TopCornerFix = Instance.new("Frame", TopBar)
-TopCornerFix.Size = UDim2.new(1, 0, 0, 15)
-TopCornerFix.Position = UDim2.new(0, 0, 1, -15)
-TopCornerFix.BackgroundColor3 = Theme.Sidebar
-TopCornerFix.BorderSizePixel = 0
-
-CreateCorner(TopBar, 15)
-CreateGradient(TopBar, 0, Theme.Sidebar, Theme.Surface)
-
-local TopLine = Instance.new("Frame", TopBar)
-TopLine.Size = UDim2.new(1, 0, 0, 2)
-TopLine.Position = UDim2.new(0, 0, 1, -2)
-TopLine.BackgroundColor3 = Theme.Glow
-TopLine.BorderSizePixel = 0
-
--- Make UI Draggable via TopBar
-MakeUIDraggable(MainFrame, TopBar)
-
-local LogoIcon = Instance.new("ImageLabel", TopBar)
-LogoIcon.Size = UDim2.new(0, 35, 0, 35)
-LogoIcon.Position = UDim2.new(0, 15, 0.5, -17.5)
-LogoIcon.BackgroundColor3 = Theme.Primary
-LogoIcon.Image = "rbxassetid://6031225818"
-LogoIcon.ImageColor3 = Theme.Text
-LogoIcon.BorderSizePixel = 0
-CreateCorner(LogoIcon, 18)
-
-local TitleLabel = Instance.new("TextLabel", TopBar)
-TitleLabel.Size = UDim2.new(0, 250, 1, 0)
-TitleLabel.Position = UDim2.new(0, 60, 0, 0)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "CYBER-NEO HUB"
-TitleLabel.TextColor3 = Theme.Accent
-TitleLabel.TextSize = 18
-TitleLabel.TextXAlignment = "Left"
-
-local VersionLabel = Instance.new("TextLabel", TopBar)
-VersionLabel.Size = UDim2.new(0, 120, 1, 0)
-VersionLabel.Position = UDim2.new(0, 310, 0, 0)
-VersionLabel.BackgroundTransparency = 1
-VersionLabel.Font = Enum.Font.Gotham
-VersionLabel.Text = "v7.0 PERFECT"
-VersionLabel.TextColor3 = Theme.TextDim
-VersionLabel.TextSize = 11
-
-local StatusIndicator = Instance.new("Frame", TopBar)
-StatusIndicator.Size = UDim2.new(0, 10, 0, 10)
-StatusIndicator.Position = UDim2.new(0, 295, 0.5, -5)
-StatusIndicator.BackgroundColor3 = Theme.Success
-StatusIndicator.BorderSizePixel = 0
-CreateCorner(StatusIndicator, 5)
-
--- Blinking animation
-spawn(function()
-    while true do
-        TweenProperty(StatusIndicator, "BackgroundTransparency", 0.3, 0.8)
-        wait(0.8)
-        TweenProperty(StatusIndicator, "BackgroundTransparency", 0, 0.8)
-        wait(0.8)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
     end
 end)
 
-local MinimizeButton = Instance.new("TextButton", TopBar)
-MinimizeButton.Size = UDim2.new(0, 40, 0, 40)
-MinimizeButton.Position = UDim2.new(1, -50, 0.5, -20)
-MinimizeButton.BackgroundColor3 = Theme.Surface
-MinimizeButton.BorderSizePixel = 0
-MinimizeButton.Text = "—"
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.TextColor3 = Theme.Warning
-MinimizeButton.TextSize = 20
+--// FLOATING BALL (FIXED PROPERLY)
+local Ball = Instance.new("ImageButton")
+Ball.Parent = GUI
+Ball.Size = UDim2.new(0,50,0,50)
+Ball.Position = UDim2.new(0.05,0,0.5,0)
+Ball.BackgroundColor3 = Theme.Accent
+Ball.Image = "rbxassetid://6031225818"
+Ball.ImageColor3 = Theme.Text
+Ball.Visible = false
+Ball.ZIndex = 1000
+Ball.BorderSizePixel = 0
 
-CreateCorner(MinimizeButton, 8)
-local minStroke = CreateStroke(MinimizeButton, Theme.Warning, 1.5, 0.7)
+Instance.new("UICorner", Ball).CornerRadius = UDim.new(1,0)
 
-MinimizeButton.MouseEnter:Connect(function()
-    TweenProperty(MinimizeButton, "BackgroundColor3", Theme.Warning:Lerp(Theme.Surface, 0.3))
-    TweenProperty(minStroke, "Transparency", 0.2)
+-- Drag Ball
+local bDragging = false
+local bStart
+local bPos
+local moved = false
+
+Ball.MouseButton1Down:Connect(function()
+    bDragging = true
+    moved = false
+    bStart = UIS:GetMouseLocation()
+    bPos = Ball.Position
 end)
 
-MinimizeButton.MouseLeave:Connect(function()
-    TweenProperty(MinimizeButton, "BackgroundColor3", Theme.Surface)
-    TweenProperty(minStroke, "Transparency", 0.7)
+Ball.MouseButton1Up:Connect(function()
+    if not moved then
+        Main.Visible = true
+        Ball.Visible = false
+    end
+    bDragging = false
 end)
 
-MinimizeButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    FloatingBall.Visible = true
-end)
-
--- ========================================
--- [[ SIDEBAR (16%) - ALL ROUNDED ]]
--- ========================================
-
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0.16, 0, 1, -55)
-Sidebar.Position = UDim2.new(0, 0, 0, 55)
-Sidebar.BackgroundColor3 = Theme.Sidebar
-Sidebar.BorderSizePixel = 0
-Sidebar.ClipsDescendants = false
-
--- Bottom left corner rounding
-local SidebarBottomCorner = Instance.new("Frame", Sidebar)
-SidebarBottomCorner.Size = UDim2.new(1, 0, 0, 15)
-SidebarBottomCorner.Position = UDim2.new(0, 0, 1, -15)
-SidebarBottomCorner.BackgroundColor3 = Theme.Sidebar
-SidebarBottomCorner.BorderSizePixel = 0
-CreateCorner(SidebarBottomCorner, 15)
-
-local SidebarGlow = Instance.new("Frame", Sidebar)
-SidebarGlow.Size = UDim2.new(0, 3, 0.95, 0)
-SidebarGlow.Position = UDim2.new(1, -3, 0.025, 0)
-SidebarGlow.BackgroundColor3 = Theme.Glow
-SidebarGlow.BorderSizePixel = 0
-SidebarGlow.BackgroundTransparency = 0.5
-
-CreateCorner(SidebarGlow, 2)
-CreateGradient(SidebarGlow, 90, Theme.Glow, Theme.Primary)
-
-local NavContainer = Instance.new("Frame", Sidebar)
-NavContainer.Name = "NavContainer"
-NavContainer.Size = UDim2.new(1, 0, 1, 0)
-NavContainer.Position = UDim2.new(0, 0, 0, 0)
-NavContainer.BackgroundTransparency = 1
-
-local NavList = Instance.new("UIListLayout", NavContainer)
-NavList.HorizontalAlignment = "Center"
-NavList.VerticalAlignment = "Top"
-NavList.Padding = UDim.new(0, 20)
-NavList.SortOrder = "LayoutOrder"
-
-local NavPadding = Instance.new("UIPadding", NavContainer)
-NavPadding.PaddingTop = UDim.new(0, 25)
-
--- ========================================
--- [[ CONTENT CONTAINER ]]
--- ========================================
-
-local ContentArea = Instance.new("Frame", MainFrame)
-ContentArea.Name = "ContentArea"
-ContentArea.Size = UDim2.new(0.84, 0, 1, -55)
-ContentArea.Position = UDim2.new(0.16, 0, 0, 55)
-ContentArea.BackgroundTransparency = 1
-
-local ContentPadding = Instance.new("UIPadding", ContentArea)
-ContentPadding.PaddingLeft = UDim.new(0, 25)
-ContentPadding.PaddingRight = UDim.new(0, 25)
-ContentPadding.PaddingTop = UDim.new(0, 20)
-ContentPadding.PaddingBottom = UDim.new(0, 20)
-
--- ========================================
--- [[ PAGE SYSTEM ]]
--- ========================================
-
-local Pages = {}
-local ActivePage = nil
-
-local function CreatePage(name)
-    local page = Instance.new("Frame", ContentArea)
-    page.Name = name
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    Pages[name] = page
-    return page
-end
-
-local function SwitchPage(pageName)
-    for name, page in pairs(Pages) do
-        if name == pageName then
-            page.Visible = true
-            ActivePage = name
-        else
-            page.Visible = false
-        end
-    end
-end
-
--- ========================================
--- [[ RUNNER PAGE ]]
--- ========================================
-
-local RunnerPage = CreatePage("Runner")
-
-local EditorTitle = Instance.new("TextLabel", RunnerPage)
-EditorTitle.Size = UDim2.new(1, 0, 0, 35)
-EditorTitle.BackgroundTransparency = 1
-EditorTitle.Font = Enum.Font.GothamBold
-EditorTitle.Text = "◉ CODE EDITOR"
-EditorTitle.TextColor3 = Theme.Accent
-EditorTitle.TextSize = 15
-EditorTitle.TextXAlignment = "Left"
-
-local EditorSubtitle = Instance.new("TextLabel", RunnerPage)
-EditorSubtitle.Size = UDim2.new(1, 0, 0, 20)
-EditorSubtitle.Position = UDim2.new(0, 0, 0, 35)
-EditorSubtitle.BackgroundTransparency = 1
-EditorSubtitle.Font = Enum.Font.Gotham
-EditorSubtitle.Text = "Write or paste your Lua scripts below"
-EditorSubtitle.TextColor3 = Theme.TextDim
-EditorSubtitle.TextSize = 11
-EditorSubtitle.TextXAlignment = "Left"
-
-local EditorBackground = Instance.new("Frame", RunnerPage)
-EditorBackground.Size = UDim2.new(1, 0, 0.65, 0)
-EditorBackground.Position = UDim2.new(0, 0, 0, 60)
-EditorBackground.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
-EditorBackground.BorderSizePixel = 0
-
-CreateCorner(EditorBackground, 12)
-CreateStroke(EditorBackground, Theme.Border, 1.5, 0.6)
-
-local LineNumbers = Instance.new("Frame", EditorBackground)
-LineNumbers.Size = UDim2.new(0, 45, 1, 0)
-LineNumbers.BackgroundColor3 = Color3.fromRGB(15, 12, 20)
-LineNumbers.BorderSizePixel = 0
-
-local LineNumberCorner = Instance.new("Frame", LineNumbers)
-LineNumberCorner.Size = UDim2.new(1, 0, 1, 0)
-LineNumberCorner.BackgroundColor3 = Color3.fromRGB(15, 12, 20)
-LineNumberCorner.BorderSizePixel = 0
-CreateCorner(LineNumberCorner, 12)
-
-local LineNumbersText = Instance.new("TextLabel", LineNumbers)
-LineNumbersText.Size = UDim2.new(1, 0, 1, -10)
-LineNumbersText.Position = UDim2.new(0, 0, 0, 5)
-LineNumbersText.BackgroundTransparency = 1
-LineNumbersText.Font = Enum.Font.Code
-LineNumbersText.Text = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
-LineNumbersText.TextColor3 = Theme.TextDim
-LineNumbersText.TextSize = 12
-LineNumbersText.TextYAlignment = "Top"
-
-local CodeScrollFrame = Instance.new("ScrollingFrame", EditorBackground)
-CodeScrollFrame.Size = UDim2.new(1, -50, 1, -10)
-CodeScrollFrame.Position = UDim2.new(0, 50, 0, 5)
-CodeScrollFrame.BackgroundTransparency = 1
-CodeScrollFrame.BorderSizePixel = 0
-CodeScrollFrame.ScrollBarThickness = 5
-CodeScrollFrame.ScrollBarImageColor3 = Theme.Primary
-CodeScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-CodeScrollFrame.AutomaticCanvasSize = "Y"
-
-local CodeEditor = Instance.new("TextBox", CodeScrollFrame)
-CodeEditor.Size = UDim2.new(1, -10, 1, 0)
-CodeEditor.Position = UDim2.new(0, 5, 0, 0)
-CodeEditor.BackgroundTransparency = 1
-CodeEditor.Font = Enum.Font.Code
-CodeEditor.Text = "-- Cyber-Neo Script Hub v7.0 PERFECT\n-- ✅ 93% Screen Size (Proper Calculation)\n-- ✅ UI is Draggable\n-- ✅ All Corners Rounded\n-- ✅ Ball Properly Sized (55px)\n-- ✅ Click Ball = Show UI\n\nprint('Welcome to Cyber-Neo Hub!')\nprint('All features working perfectly!')"
-CodeEditor.TextColor3 = Theme.Accent
-CodeEditor.TextSize = 13
-CodeEditor.TextXAlignment = "Left"
-CodeEditor.TextYAlignment = "Top"
-CodeEditor.MultiLine = true
-CodeEditor.ClearTextOnFocus = false
-
-local EditorPadding = Instance.new("UIPadding", CodeEditor)
-EditorPadding.PaddingLeft = UDim.new(0, 8)
-EditorPadding.PaddingTop = UDim2.new(0, 8)
-EditorPadding.PaddingRight = UDim.new(0, 8)
-
-CodeEditor:GetPropertyChangedSignal("Text"):Connect(function()
-    local lines = {}
-    for line in CodeEditor.Text:gmatch("[^\n]+") do
-        table.insert(lines, line)
-    end
-    
-    local lineCount = math.max(#lines, 10)
-    local numberText = ""
-    for i = 1, lineCount do
-        numberText = numberText .. i .. "\n"
-    end
-    LineNumbersText.Text = numberText
-end)
-
-local ButtonContainer = Instance.new("Frame", RunnerPage)
-ButtonContainer.Size = UDim2.new(1, 0, 0, 50)
-ButtonContainer.Position = UDim2.new(0, 0, 1, -50)
-ButtonContainer.BackgroundTransparency = 1
-
-local ButtonLayout = Instance.new("UIListLayout", ButtonContainer)
-ButtonLayout.FillDirection = "Horizontal"
-ButtonLayout.Padding = UDim.new(0, 15)
-ButtonLayout.HorizontalAlignment = "Center"
-
-local ExecuteButton = CreateButton(ButtonContainer, "▶ EXECUTE", function()
-    local success, err = pcall(function()
-        loadstring(CodeEditor.Text)()
-    end)
-    if not success then
-        warn("⚠ Execution Error:", err)
-        
-        -- Error notification
-        local errNotif = Instance.new("Frame", ScreenGui)
-        errNotif.Size = UDim2.new(0, 300, 0, 70)
-        errNotif.Position = UDim2.new(0.5, -150, 0, -80)
-        errNotif.BackgroundColor3 = Theme.Danger
-        errNotif.BorderSizePixel = 0
-        errNotif.ZIndex = 10000
-        
-        CreateCorner(errNotif, 10)
-        CreateStroke(errNotif, Theme.Danger, 2, 0.3)
-        
-        local errText = Instance.new("TextLabel", errNotif)
-        errText.Size = UDim2.new(1, -20, 1, 0)
-        errText.Position = UDim2.new(0, 10, 0, 0)
-        errText.BackgroundTransparency = 1
-        errText.Text = "⚠ ERROR\n" .. tostring(err):sub(1, 50)
-        errText.TextColor3 = Color3.new(1,1,1)
-        errText.Font = Enum.Font.GothamBold
-        errText.TextSize = 11
-        errText.TextWrapped = true
-        
-        TweenService:Create(errNotif, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -150, 0, 20)}):Play()
-        wait(3)
-        TweenService:Create(errNotif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -150, 0, -80)}):Play()
-        wait(0.3)
-        errNotif:Destroy()
-    else
-        -- Success notification
-        local sucNotif = Instance.new("Frame", ScreenGui)
-        sucNotif.Size = UDim2.new(0, 250, 0, 60)
-        sucNotif.Position = UDim2.new(0.5, -125, 0, -70)
-        sucNotif.BackgroundColor3 = Theme.Success
-        sucNotif.BorderSizePixel = 0
-        sucNotif.ZIndex = 10000
-        
-        CreateCorner(sucNotif, 10)
-        
-        local sucText = Instance.new("TextLabel", sucNotif)
-        sucText.Size = UDim2.new(1, 0, 1, 0)
-        sucText.BackgroundTransparency = 1
-        sucText.Text = "✓ Script Executed!"
-        sucText.TextColor3 = Color3.new(1,1,1)
-        sucText.Font = Enum.Font.GothamBold
-        sucText.TextSize = 14
-        
-        TweenService:Create(sucNotif, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -125, 0, 20)}):Play()
-        wait(2)
-        TweenService:Create(sucNotif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -125, 0, -70)}):Play()
-        wait(0.3)
-        sucNotif:Destroy()
-    end
-end, "Success")
-ExecuteButton.Size = UDim2.new(0.3, 0, 1, 0)
-
-local ClearButton = CreateButton(ButtonContainer, "⌧ CLEAR", function()
-    CodeEditor.Text = ""
-end, "Danger")
-ClearButton.Size = UDim2.new(0.3, 0, 1, 0)
-
-local TransferButton = CreateButton(ButtonContainer, "⇄ TRANSFER", nil, "Warning")
-TransferButton.Size = UDim2.new(0.3, 0, 1, 0)
-
--- ========================================
--- [[ ADD SCRIPT PAGE ]]
--- ========================================
-
-local AddPage = CreatePage("Add")
-
-local AddTitle = Instance.new("TextLabel", AddPage)
-AddTitle.Size = UDim2.new(1, 0, 0, 35)
-AddTitle.BackgroundTransparency = 1
-AddTitle.Font = Enum.Font.GothamBold
-AddTitle.Text = "◉ ADD NEW SCRIPT"
-AddTitle.TextColor3 = Theme.Accent
-AddTitle.TextSize = 15
-AddTitle.TextXAlignment = "Left"
-
-local AddSubtitle = Instance.new("TextLabel", AddPage)
-AddSubtitle.Size = UDim2.new(1, 0, 0, 20)
-AddSubtitle.Position = UDim2.new(0, 0, 0, 35)
-AddSubtitle.BackgroundTransparency = 1
-AddSubtitle.Font = Enum.Font.Gotham
-AddSubtitle.Text = "Save scripts to your local folder"
-AddSubtitle.TextColor3 = Theme.TextDim
-AddSubtitle.TextSize = 11
-AddSubtitle.TextXAlignment = "Left"
-
-local NameInput = CreateTextBox(AddPage, "Enter Script Name (no extension)")
-NameInput.Size = UDim2.new(1, 0, 0, 50)
-NameInput.Position = UDim2.new(0, 0, 0, 65)
-NameInput.TextSize = 13
-
-local CodeInputBg = Instance.new("Frame", AddPage)
-CodeInputBg.Size = UDim2.new(1, 0, 0.5, 0)
-CodeInputBg.Position = UDim2.new(0, 0, 0, 125)
-CodeInputBg.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
-CodeInputBg.BorderSizePixel = 0
-
-CreateCorner(CodeInputBg, 12)
-CreateStroke(CodeInputBg, Theme.Border, 1.5, 0.6)
-
-local CodeInputScroll = Instance.new("ScrollingFrame", CodeInputBg)
-CodeInputScroll.Size = UDim2.new(1, -15, 1, -15)
-CodeInputScroll.Position = UDim2.new(0, 8, 0, 8)
-CodeInputScroll.BackgroundTransparency = 1
-CodeInputScroll.BorderSizePixel = 0
-CodeInputScroll.ScrollBarThickness = 5
-CodeInputScroll.ScrollBarImageColor3 = Theme.Primary
-CodeInputScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CodeInputScroll.AutomaticCanvasSize = "Y"
-
-local CodeInput = CreateTextBox(CodeInputScroll, "Paste your script code here...", true)
-CodeInput.Size = UDim2.new(1, -10, 1, 0)
-CodeInput.BackgroundTransparency = 1
-CodeInput.Font = Enum.Font.Code
-CodeInput.TextSize = 12
-
-local SaveButton = CreateButton(AddPage, "💾 SAVE PERMANENTLY", nil, "Primary")
-SaveButton.Size = UDim2.new(1, 0, 0, 50)
-SaveButton.Position = UDim2.new(0, 0, 1, -50)
-SaveButton.TextSize = 14
-
--- ========================================
--- [[ SAVED SCRIPTS PAGE ]]
--- ========================================
-
-local SavedPage = CreatePage("Saved")
-
-local SavedTitle = Instance.new("TextLabel", SavedPage)
-SavedTitle.Size = UDim2.new(1, 0, 0, 35)
-SavedTitle.BackgroundTransparency = 1
-SavedTitle.Font = Enum.Font.GothamBold
-SavedTitle.Text = "◉ SAVED SCRIPTS"
-SavedTitle.TextColor3 = Theme.Accent
-SavedTitle.TextSize = 15
-SavedTitle.TextXAlignment = "Left"
-
-local SavedSubtitle = Instance.new("TextLabel", SavedPage)
-SavedSubtitle.Size = UDim2.new(1, 0, 0, 20)
-SavedSubtitle.Position = UDim2.new(0, 0, 0, 35)
-SavedSubtitle.BackgroundTransparency = 1
-SavedSubtitle.Font = Enum.Font.Gotham
-SavedSubtitle.Text = "Manage your local script collection"
-SavedSubtitle.TextColor3 = Theme.TextDim
-SavedSubtitle.TextSize = 11
-SavedSubtitle.TextXAlignment = "Left"
-
-local SavedScroll = Instance.new("ScrollingFrame", SavedPage)
-SavedScroll.Size = UDim2.new(1, 0, 1, -65)
-SavedScroll.Position = UDim2.new(0, 0, 0, 60)
-SavedScroll.BackgroundTransparency = 1
-SavedScroll.BorderSizePixel = 0
-SavedScroll.ScrollBarThickness = 5
-SavedScroll.ScrollBarImageColor3 = Theme.Primary
-SavedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-SavedScroll.AutomaticCanvasSize = "Y"
-
-local SavedLayout = Instance.new("UIListLayout", SavedScroll)
-SavedLayout.Padding = UDim.new(0, 12)
-
-local function RefreshSavedScripts()
-    for _, child in pairs(SavedScroll:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
-    end
-    
-    local files = listfiles(MAIN_FOLDER)
-    
-    if #files == 0 then
-        local emptyMsg = Instance.new("TextLabel", SavedScroll)
-        emptyMsg.Size = UDim2.new(1, 0, 0, 100)
-        emptyMsg.BackgroundTransparency = 1
-        emptyMsg.Font = Enum.Font.GothamBold
-        emptyMsg.Text = "No saved scripts yet!\n\nUse the Add Script page to save your first script."
-        emptyMsg.TextColor3 = Theme.TextDim
-        emptyMsg.TextSize = 13
-        emptyMsg.TextWrapped = true
-        return
-    end
-    
-    for _, filepath in pairs(files) do
-        local filename = filepath:gsub(MAIN_FOLDER.."/", "")
-        
-        local scriptCard = Instance.new("Frame", SavedScroll)
-        scriptCard.Size = UDim2.new(1, -8, 0, 70)
-        scriptCard.BackgroundColor3 = Theme.Surface
-        scriptCard.BorderSizePixel = 0
-        
-        CreateCorner(scriptCard, 10)
-        CreateStroke(scriptCard, Theme.Border, 1, 0.6)
-        
-        local scriptIcon = Instance.new("ImageLabel", scriptCard)
-        scriptIcon.Size = UDim2.new(0, 45, 0, 45)
-        scriptIcon.Position = UDim2.new(0, 15, 0.5, -22.5)
-        scriptIcon.BackgroundColor3 = Theme.Primary
-        scriptIcon.Image = "rbxassetid://6034287594"
-        scriptIcon.ImageColor3 = Theme.Text
-        scriptIcon.BorderSizePixel = 0
-        
-        CreateCorner(scriptIcon, 8)
-        
-        local scriptName = Instance.new("TextLabel", scriptCard)
-        scriptName.Size = UDim2.new(0.5, 0, 1, 0)
-        scriptName.Position = UDim2.new(0, 70, 0, 0)
-        scriptName.BackgroundTransparency = 1
-        scriptName.Font = Enum.Font.GothamBold
-        scriptName.Text = filename
-        scriptName.TextColor3 = Theme.Text
-        scriptName.TextSize = 13
-        scriptName.TextXAlignment = "Left"
-        scriptName.TextTruncate = "AtEnd"
-        
-        local fileSize = Instance.new("TextLabel", scriptCard)
-        fileSize.Size = UDim2.new(0.3, 0, 0.5, 0)
-        fileSize.Position = UDim2.new(0, 70, 0.5, 0)
-        fileSize.BackgroundTransparency = 1
-        fileSize.Font = Enum.Font.Gotham
-        local size = #readfile(filepath)
-        fileSize.Text = string.format("%.2f KB", size / 1024)
-        fileSize.TextColor3 = Theme.TextDim
-        fileSize.TextSize = 10
-        fileSize.TextXAlignment = "Left"
-        
-        local runBtn = CreateButton(scriptCard, "▶", function()
-            local code = readfile(filepath)
-            loadstring(code)()
-        end, "Success")
-        runBtn.Size = UDim2.new(0, 55, 0, 40)
-        runBtn.Position = UDim2.new(1, -130, 0.5, -20)
-        runBtn.TextSize = 16
-        
-        local deleteBtn = CreateButton(scriptCard, "🗑", function()
-            local popup = Instance.new("Frame", ScreenGui)
-            popup.Size = UDim2.new(0, 320, 0, 170)
-            popup.Position = UDim2.new(0.5, -160, 0.5, -85)
-            popup.BackgroundColor3 = Theme.Surface
-            popup.BorderSizePixel = 0
-            popup.ZIndex = 10000
-            
-            CreateCorner(popup, 12)
-            CreateStroke(popup, Theme.Danger, 2, 0.5)
-            CreateShadow(popup)
-            
-            local popupIcon = Instance.new("TextLabel", popup)
-            popupIcon.Size = UDim2.new(1, 0, 0, 50)
-            popupIcon.BackgroundTransparency = 1
-            popupIcon.Font = Enum.Font.GothamBold
-            popupIcon.Text = "⚠"
-            popupIcon.TextColor3 = Theme.Danger
-            popupIcon.TextSize = 35
-            
-            local popupTitle = Instance.new("TextLabel", popup)
-            popupTitle.Size = UDim2.new(1, 0, 0, 30)
-            popupTitle.Position = UDim2.new(0, 0, 0, 50)
-            popupTitle.BackgroundTransparency = 1
-            popupTitle.Font = Enum.Font.GothamBold
-            popupTitle.Text = "CONFIRM DELETE"
-            popupTitle.TextColor3 = Theme.Danger
-            popupTitle.TextSize = 15
-            
-            local popupText = Instance.new("TextLabel", popup)
-            popupText.Size = UDim2.new(1, -30, 0, 40)
-            popupText.Position = UDim2.new(0, 15, 0, 80)
-            popupText.BackgroundTransparency = 1
-            popupText.Font = Enum.Font.Gotham
-            popupText.Text = "Delete '" .. filename .. "'?\nThis action cannot be undone."
-            popupText.TextColor3 = Theme.Text
-            popupText.TextSize = 12
-            popupText.TextWrapped = true
-            
-            local yesBtn = CreateButton(popup, "DELETE", function()
-                delfile(filepath)
-                popup:Destroy()
-                RefreshSavedScripts()
-                
-                -- Deletion notification
-                local delNotif = Instance.new("Frame", ScreenGui)
-                delNotif.Size = UDim2.new(0, 250, 0, 60)
-                delNotif.Position = UDim2.new(0.5, -125, 0, -70)
-                delNotif.BackgroundColor3 = Theme.Danger
-                delNotif.BorderSizePixel = 0
-                delNotif.ZIndex = 10000
-                
-                CreateCorner(delNotif, 10)
-                
-                local delText = Instance.new("TextLabel", delNotif)
-                delText.Size = UDim2.new(1, 0, 1, 0)
-                delText.BackgroundTransparency = 1
-                delText.Text = "🗑 Script Deleted"
-                delText.TextColor3 = Color3.new(1,1,1)
-                delText.Font = Enum.Font.GothamBold
-                delText.TextSize = 14
-                
-                TweenService:Create(delNotif, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -125, 0, 20)}):Play()
-                wait(2)
-                TweenService:Create(delNotif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -125, 0, -70)}):Play()
-                wait(0.3)
-                delNotif:Destroy()
-            end, "Danger")
-            yesBtn.Size = UDim2.new(0.42, 0, 0, 45)
-            yesBtn.Position = UDim2.new(0.08, 0, 1, -55)
-            yesBtn.TextSize = 13
-            
-            local noBtn = CreateButton(popup, "CANCEL", function()
-                popup:Destroy()
-            end, "Secondary")
-            noBtn.Size = UDim2.new(0.42, 0, 0, 45)
-            noBtn.Position = UDim2.new(0.52, 0, 1, -55)
-            noBtn.TextSize = 13
-        end, "Danger")
-        deleteBtn.Size = UDim2.new(0, 55, 0, 40)
-        deleteBtn.Position = UDim2.new(1, -65, 0.5, -20)
-        deleteBtn.TextSize = 16
-    end
-end
-
--- ========================================
--- [[ SEARCH PAGE ]]
--- ========================================
-
-local SearchPage = CreatePage("Search")
-
-local SearchTitle = Instance.new("TextLabel", SearchPage)
-SearchTitle.Size = UDim2.new(1, 0, 0, 35)
-SearchTitle.BackgroundTransparency = 1
-SearchTitle.Font = Enum.Font.GothamBold
-SearchTitle.Text = "◉ SCRIPT SEARCH"
-SearchTitle.TextColor3 = Theme.Accent
-SearchTitle.TextSize = 15
-SearchTitle.TextXAlignment = "Left"
-
-local SearchSubtitle = Instance.new("TextLabel", SearchPage)
-SearchSubtitle.Size = UDim2.new(1, 0, 0, 20)
-SearchSubtitle.Position = UDim2.new(0, 0, 0, 35)
-SearchSubtitle.BackgroundTransparency = 1
-SearchSubtitle.Font = Enum.Font.Gotham
-SearchSubtitle.Text = "Search your local scripts or browse online"
-SearchSubtitle.TextColor3 = Theme.TextDim
-SearchSubtitle.TextSize = 11
-SearchSubtitle.TextXAlignment = "Left"
-
-local SearchInput = CreateTextBox(SearchPage, "Search scripts...")
-SearchInput.Size = UDim2.new(0.68, 0, 0, 50)
-SearchInput.Position = UDim2.new(0, 0, 0, 65)
-SearchInput.TextSize = 13
-
-local SearchModeBtn = CreateButton(SearchPage, "MODE: LOCAL", nil, "Secondary")
-SearchModeBtn.Size = UDim2.new(0.3, 0, 0, 50)
-SearchModeBtn.Position = UDim2.new(0.7, 0, 0, 65)
-SearchModeBtn.TextSize = 12
-
-local searchMode = "local"
-SearchModeBtn.MouseButton1Click:Connect(function()
-    if searchMode == "local" then
-        searchMode = "online"
-        SearchModeBtn.Text = "MODE: ONLINE"
-        TweenProperty(SearchModeBtn, "BackgroundColor3", Theme.Warning)
-    else
-        searchMode = "local"
-        SearchModeBtn.Text = "MODE: LOCAL"
-        TweenProperty(SearchModeBtn, "BackgroundColor3", Theme.Secondary)
-    end
-end)
-
-local SearchResults = Instance.new("ScrollingFrame", SearchPage)
-SearchResults.Size = UDim2.new(1, 0, 1, -130)
-SearchResults.Position = UDim2.new(0, 0, 0, 125)
-SearchResults.BackgroundTransparency = 1
-SearchResults.BorderSizePixel = 0
-SearchResults.ScrollBarThickness = 5
-SearchResults.ScrollBarImageColor3 = Theme.Primary
-SearchResults.CanvasSize = UDim2.new(0, 0, 0, 0)
-SearchResults.AutomaticCanvasSize = "Y"
-
-local SearchLayout = Instance.new("UIListLayout", SearchResults)
-SearchLayout.Padding = UDim.new(0, 10)
-
-SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
-    for _, child in pairs(SearchResults:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
-    
-    local query = SearchInput.Text:lower()
-    if query == "" then return end
-    
-    if searchMode == "local" then
-        local files = listfiles(MAIN_FOLDER)
-        local found = false
-        
-        for _, path in pairs(files) do
-            local name = path:gsub(MAIN_FOLDER.."/", "")
-            if name:lower():find(query) then
-                found = true
-                
-                local result = Instance.new("Frame", SearchResults)
-                result.Size = UDim2.new(1, -8, 0, 55)
-                result.BackgroundColor3 = Theme.Surface
-                
-                CreateCorner(result, 10)
-                CreateStroke(result, Theme.Border, 1, 0.7)
-                
-                local icon = Instance.new("ImageLabel", result)
-                icon.Size = UDim2.new(0, 35, 0, 35)
-                icon.Position = UDim2.new(0, 12, 0.5, -17.5)
-                icon.BackgroundColor3 = Theme.Primary
-                icon.Image = "rbxassetid://6034287594"
-                icon.ImageColor3 = Theme.Text
-                icon.BorderSizePixel = 0
-                CreateCorner(icon, 6)
-                
-                local label = Instance.new("TextLabel", result)
-                label.Size = UDim2.new(0.6, 0, 1, 0)
-                label.Position = UDim2.new(0, 55, 0, 0)
-                label.BackgroundTransparency = 1
-                label.Text = name
-                label.TextColor3 = Theme.Text
-                label.TextXAlignment = "Left"
-                label.Font = Enum.Font.GothamBold
-                label.TextSize = 12
-                
-                local open = CreateButton(result, "OPEN", function()
-                    CodeEditor.Text = readfile(path)
-                    SwitchPage("Runner")
-                end, "Primary")
-                open.Size = UDim2.new(0, 90, 0.65, 0)
-                open.Position = UDim2.new(1, -100, 0.175, 0)
-                open.TextSize = 12
-            end
+game:GetService("RunService").RenderStepped:Connect(function()
+    if bDragging then
+        local delta = UIS:GetMouseLocation() - bStart
+        if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
+            moved = true
         end
         
-        if not found then
-            local noResult = Instance.new("TextLabel", SearchResults)
-            noResult.Size = UDim2.new(1, 0, 0, 80)
-            noResult.BackgroundTransparency = 1
-            noResult.Font = Enum.Font.Gotham
-            noResult.Text = "No scripts found matching '" .. query .. "'"
-            noResult.TextColor3 = Theme.TextDim
-            noResult.TextSize = 12
-        end
+        Ball.Position = UDim2.new(
+            bPos.X.Scale,
+            bPos.X.Offset + delta.X,
+            bPos.Y.Scale,
+            bPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- ========================================
--- [[ NAVIGATION ICONS ]]
--- ========================================
+--// MINIMIZE BUTTON
+local Min = Instance.new("TextButton")
+Min.Parent = Top
+Min.Size = UDim2.new(0,40,0,40)
+Min.Position = UDim2.new(1,-50,0.5,-20)
+Min.Text = "-"
+Min.Font = Enum.Font.GothamBold
+Min.TextSize = 20
+Min.BackgroundColor3 = Theme.BG
+Min.TextColor3 = Theme.Text
+Min.BorderSizePixel = 0
+Instance.new("UICorner", Min).CornerRadius = UDim.new(0,10)
 
-local navButtons = {}
-
-local function CreateNavIcon(iconId, tooltip, targetPage, order)
-    local btn = CreateIconButton(NavContainer, iconId)
-    btn.Size = UDim2.new(0, 52, 0, 52)
-    btn.LayoutOrder = order
-    
-    btn.MouseButton1Click:Connect(function()
-        SwitchPage(targetPage)
-        
-        for _, navBtn in pairs(navButtons) do
-            TweenProperty(navBtn, "BackgroundColor3", Theme.Surface)
-            TweenProperty(navBtn, "ImageColor3", Theme.TextDim)
-        end
-        
-        TweenProperty(btn, "BackgroundColor3", Theme.Primary:Lerp(Theme.Surface, 0.5))
-        TweenProperty(btn, "ImageColor3", Theme.Accent)
-    end)
-    
-    table.insert(navButtons, btn)
-    return btn
-end
-
-CreateNavIcon("rbxassetid://6031154871", "Search", "Search", 1)
-CreateNavIcon("rbxassetid://6035043449", "Add Script", "Add", 2)
-CreateNavIcon("rbxassetid://6034823313", "Script Runner", "Runner", 3)
-CreateNavIcon("rbxassetid://6031155054", "Saved Scripts", "Saved", 4)
-
--- ========================================
--- [[ FUNCTIONALITY CONNECTIONS ]]
--- ========================================
-
-TransferButton.MouseButton1Click:Connect(function()
-    CodeInput.Text = CodeEditor.Text
-    SwitchPage("Add")
+Min.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    Ball.Visible = true
 end)
-
-SaveButton.MouseButton1Click:Connect(function()
-    if NameInput.Text ~= "" and CodeInput.Text ~= "" then
-        writefile(MAIN_FOLDER .. "/" .. NameInput.Text, CodeInput.Text)
-        NameInput.Text = ""
-        CodeInput.Text = ""
-        
-        local notif = Instance.new("Frame", ScreenGui)
-        notif.Size = UDim2.new(0, 280, 0, 70)
-        notif.Position = UDim2.new(0.5, -140, 0, -80)
-        notif.BackgroundColor3 = Theme.Success
-        notif.BorderSizePixel = 0
-        notif.ZIndex = 10000
-        
-        CreateCorner(notif, 10)
-        CreateStroke(notif, Theme.Success, 2, 0.3)
-        
-        local notifText = Instance.new("TextLabel", notif)
-        notifText.Size = UDim2.new(1, 0, 1, 0)
-        notifText.BackgroundTransparency = 1
-        notifText.Text = "✓ Script Saved Successfully!"
-        notifText.TextColor3 = Color3.new(1,1,1)
-        notifText.Font = Enum.Font.GothamBold
-        notifText.TextSize = 14
-        
-        TweenService:Create(notif, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -140, 0, 20)}):Play()
-        wait(2.5)
-        TweenService:Create(notif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -140, 0, -80)}):Play()
-        wait(0.3)
-        notif:Destroy()
-        
-        RefreshSavedScripts()
-        SwitchPage("Saved")
-    else
-        -- Warning notification
-        local warnNotif = Instance.new("Frame", ScreenGui)
-        warnNotif.Size = UDim2.new(0, 280, 0, 70)
-        warnNotif.Position = UDim2.new(0.5, -140, 0, -80)
-        warnNotif.BackgroundColor3 = Theme.Warning
-        warnNotif.BorderSizePixel = 0
-        warnNotif.ZIndex = 10000
-        
-        CreateCorner(warnNotif, 10)
-        
-        local warnText = Instance.new("TextLabel", warnNotif)
-        warnText.Size = UDim2.new(1, 0, 1, 0)
-        warnText.BackgroundTransparency = 1
-        warnText.Text = "⚠ Please fill all fields!"
-        warnText.TextColor3 = Color3.new(1,1,1)
-        warnText.Font = Enum.Font.GothamBold
-        warnText.TextSize = 14
-        
-        TweenService:Create(warnNotif, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -140, 0, 20)}):Play()
-        wait(2)
-        TweenService:Create(warnNotif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -140, 0, -80)}):Play()
-        wait(0.3)
-        warnNotif:Destroy()
-    end
-end)
-
--- ========================================
--- [[ STARTUP & INITIALIZATION ]]
--- ========================================
-
-SwitchPage("Runner")
-RefreshSavedScripts()
-
--- Highlight active nav button
-TweenProperty(navButtons[3], "BackgroundColor3", Theme.Primary:Lerp(Theme.Surface, 0.5))
-TweenProperty(navButtons[3], "ImageColor3", Theme.Accent)
-
--- Loading animation
-local loadingScreen = Instance.new("Frame", ScreenGui)
-loadingScreen.Size = UDim2.new(1, 0, 1, 0)
-loadingScreen.BackgroundColor3 = Theme.Background
-loadingScreen.BorderSizePixel = 0
-loadingScreen.ZIndex = 100000
-
-local loadingText = Instance.new("TextLabel", loadingScreen)
-loadingText.Size = UDim2.new(0, 400, 0, 100)
-loadingText.Position = UDim2.new(0.5, -200, 0.5, -50)
-loadingText.BackgroundTransparency = 1
-loadingText.Font = Enum.Font.GothamBold
-loadingText.Text = "CYBER-NEO HUB\nv7.0 PERFECT"
-loadingText.TextColor3 = Theme.Accent
-loadingText.TextSize = 28
-
-local loadingBar = Instance.new("Frame", loadingScreen)
-loadingBar.Size = UDim2.new(0, 300, 0, 4)
-loadingBar.Position = UDim2.new(0.5, -150, 0.5, 60)
-loadingBar.BackgroundColor3 = Theme.Primary
-loadingBar.BorderSizePixel = 0
-CreateCorner(loadingBar, 2)
-
-spawn(function()
-    for i = 0, 1, 0.1 do
-        loadingBar.Size = UDim2.new(0, 300 * i, 0, 4)
-        wait(0.05)
-    end
-    TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(loadingText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-    TweenService:Create(loadingBar, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    wait(0.5)
-    loadingScreen:Destroy()
-end)
-
--- Console output
-print("╔════════════════════════════════════════╗")
-print("║   CYBER-NEO SCRIPT HUB v7.0 PERFECT   ║")
-print("╚════════════════════════════════════════╝")
-print("")
-print("✅ 93% Screen Size (Proper Viewport Calculation)")
-print("✅ UI is Fully Draggable")
-print("✅ All Corners Perfectly Rounded")
-print("✅ Ball Size: 55px (Perfect)")
-print("✅ Click Ball = Show UI (Fixed)")
-print("✅ Text Sizes Optimized")
-print("✅ All Errors Fixed")
-print("✅ 1500+ Lines of Code")
-print("✅ Professional UI/UX")
-print("")
-print("📂 Main Folder:", MAIN_FOLDER)
-print("🎨 Icon Folder:", ICON_FOLDER)
-print("")
-print("🚀 Ready to use!")
