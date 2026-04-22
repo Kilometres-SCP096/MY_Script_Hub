@@ -1,5 +1,4 @@
--- [[ CYBER-NEO SCRIPT HUB - FINAL PERFECT VERSION ]] --
--- ALL CRITICAL BUGS FIXED | PRODUCTION READY
+-- [[ CYBER-NEO SCRIPT HUB - FULLY FIXED VERSION ]] --
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -7,7 +6,6 @@ local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
--- CRITICAL: Forward declare MainFrame
 local MainFrame
 
 -- ========================================
@@ -41,11 +39,47 @@ local Theme = {
 -- ========================================
 -- UTILITIES
 -- ========================================
-local function Corner(p, r) local c = Instance.new("UICorner", p) c.CornerRadius = UDim.new(0, r or 12) return c end
-local function Stroke(p, col, t, tr) local s = Instance.new("UIStroke", p) s.Color = col or Theme.Border s.Thickness = t or 1 s.Transparency = tr or 0.5 s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border return s end
-local function Gradient(p, r, c1, c2) local g = Instance.new("UIGradient", p) g.Rotation = r or 90 g.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, c1 or Theme.Primary), ColorSequenceKeypoint.new(1, c2 or Theme.Secondary)}) return g end
-local function Shadow(p) local s = Instance.new("ImageLabel", p) s.Name = "Shadow" s.BackgroundTransparency = 1 s.Image = "rbxassetid://1316045217" s.ImageColor3 = Color3.new(0,0,0) s.ImageTransparency = 0.7 s.Size = UDim2.new(1, 40, 1, 40) s.Position = UDim2.new(0, -20, 0, -20) s.ZIndex = math.max((p.ZIndex or 1) - 1, 1) return s end
-local function Tween(obj, prop, val, dur) TweenService:Create(obj, TweenInfo.new(dur or 0.3, Enum.EasingStyle.Quad), {[prop] = val}):Play() end
+local function Corner(p, r)
+    local c = Instance.new("UICorner", p)
+    c.CornerRadius = UDim.new(0, r or 12)
+    return c
+end
+
+local function Stroke(p, col, t, tr)
+    local s = Instance.new("UIStroke", p)
+    s.Color = col or Theme.Border
+    s.Thickness = t or 1
+    s.Transparency = tr or 0.5
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    return s
+end
+
+local function Gradient(p, r, c1, c2)
+    local g = Instance.new("UIGradient", p)
+    g.Rotation = r or 90
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, c1 or Theme.Primary),
+        ColorSequenceKeypoint.new(1, c2 or Theme.Secondary)
+    })
+    return g
+end
+
+local function Shadow(p)
+    local s = Instance.new("ImageLabel", p)
+    s.Name = "Shadow"
+    s.BackgroundTransparency = 1
+    s.Image = "rbxassetid://1316045217"
+    s.ImageColor3 = Color3.new(0, 0, 0)
+    s.ImageTransparency = 0.7
+    s.Size = UDim2.new(1, 40, 1, 40)
+    s.Position = UDim2.new(0, -20, 0, -20)
+    s.ZIndex = math.max((p.ZIndex or 1) - 1, 1)
+    return s
+end
+
+local function Tween(obj, prop, val, dur)
+    TweenService:Create(obj, TweenInfo.new(dur or 0.3, Enum.EasingStyle.Quad), {[prop] = val}):Play()
+end
 
 local function Btn(parent, text, callback, style)
     style = style or "Primary"
@@ -57,14 +91,27 @@ local function Btn(parent, text, callback, style)
     b.TextColor3 = Theme.Text
     b.TextSize = 13
     b.AutoButtonColor = false
+    b.TextScaled = false
     Corner(b, 8)
     local s = Stroke(b, Theme.Glow, 1.5, 0.7)
     local oc = b.BackgroundColor3
-    b.MouseEnter:Connect(function() Tween(b, "BackgroundColor3", oc:Lerp(Color3.new(1,1,1), 0.15)) Tween(s, "Transparency", 0.2) end)
-    b.MouseLeave:Connect(function() Tween(b, "BackgroundColor3", oc) Tween(s, "Transparency", 0.7) end)
-    b.MouseButton1Down:Connect(function() Tween(b, "BackgroundColor3", oc:Lerp(Color3.new(0,0,0), 0.2)) end)
-    b.MouseButton1Up:Connect(function() Tween(b, "BackgroundColor3", oc) end)
-    if callback then b.MouseButton1Click:Connect(callback) end
+    b.MouseEnter:Connect(function()
+        Tween(b, "BackgroundColor3", oc:Lerp(Color3.new(1, 1, 1), 0.15))
+        Tween(s, "Transparency", 0.2)
+    end)
+    b.MouseLeave:Connect(function()
+        Tween(b, "BackgroundColor3", oc)
+        Tween(s, "Transparency", 0.7)
+    end)
+    b.MouseButton1Down:Connect(function()
+        Tween(b, "BackgroundColor3", oc:Lerp(Color3.new(0, 0, 0), 0.2))
+    end)
+    b.MouseButton1Up:Connect(function()
+        Tween(b, "BackgroundColor3", oc)
+    end)
+    if callback then
+        b.MouseButton1Click:Connect(callback)
+    end
     return b
 end
 
@@ -79,8 +126,8 @@ local function TBox(parent, placeholder, multiline)
     t.TextSize = 12
     t.ClearTextOnFocus = false
     t.MultiLine = multiline or false
-    t.TextXAlignment = multiline and "Left" or "Center"
-    t.TextYAlignment = multiline and "Top" or "Center"
+    t.TextXAlignment = multiline and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
+    t.TextYAlignment = multiline and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center
     Corner(t, 8)
     Stroke(t, Theme.Border, 1, 0.6)
     local p = Instance.new("UIPadding", t)
@@ -100,9 +147,19 @@ local function IconBtn(parent, iconId, callback)
     b.AutoButtonColor = false
     Corner(b, 10)
     local s = Stroke(b, Theme.Border, 1.5, 0.8)
-    b.MouseEnter:Connect(function() Tween(b, "ImageColor3", Theme.Accent) Tween(b, "BackgroundColor3", Theme.Surface:Lerp(Theme.Primary, 0.1)) Tween(s, "Transparency", 0.3) end)
-    b.MouseLeave:Connect(function() Tween(b, "ImageColor3", Theme.TextDim) Tween(b, "BackgroundColor3", Theme.Surface) Tween(s, "Transparency", 0.8) end)
-    if callback then b.MouseButton1Click:Connect(callback) end
+    b.MouseEnter:Connect(function()
+        Tween(b, "ImageColor3", Theme.Accent)
+        Tween(b, "BackgroundColor3", Theme.Surface:Lerp(Theme.Primary, 0.1))
+        Tween(s, "Transparency", 0.3)
+    end)
+    b.MouseLeave:Connect(function()
+        Tween(b, "ImageColor3", Theme.TextDim)
+        Tween(b, "BackgroundColor3", Theme.Surface)
+        Tween(s, "Transparency", 0.8)
+    end)
+    if callback then
+        b.MouseButton1Click:Connect(callback)
+    end
     return b
 end
 
@@ -144,12 +201,14 @@ spawn(function()
 end)
 
 local bDrag, bStart, bPos, bMoved = false, nil, nil, false
+
 Ball.MouseButton1Down:Connect(function()
     bDrag = true
     bMoved = false
     bStart = UserInputService:GetMouseLocation()
     bPos = Ball.Position
 end)
+
 Ball.MouseButton1Up:Connect(function()
     if not bMoved and MainFrame then
         MainFrame.Visible = true
@@ -158,17 +217,25 @@ Ball.MouseButton1Up:Connect(function()
     bDrag = false
     bMoved = false
 end)
+
 RunService.RenderStepped:Connect(function()
     if bDrag then
         local cur = UserInputService:GetMouseLocation()
         local delta = cur - bStart
-        if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then bMoved = true end
-        Ball.Position = UDim2.new(bPos.X.Scale, bPos.X.Offset + delta.X, bPos.Y.Scale, bPos.Y.Offset + delta.Y)
+        if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+            bMoved = true
+        end
+        Ball.Position = UDim2.new(
+            bPos.X.Scale,
+            bPos.X.Offset + delta.X,
+            bPos.Y.Scale,
+            bPos.Y.Offset + delta.Y
+        )
     end
 end)
 
 -- ========================================
--- MAIN FRAME (93%)
+-- VIEWPORT
 -- ========================================
 local function WaitViewport()
     local c = workspace.CurrentCamera
@@ -184,11 +251,18 @@ end
 local VP = WaitViewport()
 local w, h = VP.X * 0.93, VP.Y * 0.93
 local ar = 6 / 3.5
-if w / h > ar then w = h * ar else h = w / ar end
+if w / h > ar then
+    w = h * ar
+else
+    h = w / ar
+end
 
+-- ========================================
+-- MAIN FRAME
+-- ========================================
 MainFrame = Instance.new("Frame", SG)
 MainFrame.Size = UDim2.new(0, w, 0, h)
-MainFrame.Position = UDim2.new(0.5, -w/2, 0.5, -h/2)
+MainFrame.Position = UDim2.new(0.5, -w / 2, 0.5, -h / 2)
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -218,37 +292,77 @@ TopLine.Position = UDim2.new(0, 0, 1, -2)
 TopLine.BackgroundColor3 = Theme.Glow
 TopLine.BorderSizePixel = 0
 
+-- Logo icon in topbar
+local LogoIcon = Instance.new("ImageLabel", Top)
+LogoIcon.Size = UDim2.new(0, 32, 0, 32)
+LogoIcon.Position = UDim2.new(0, 15, 0.5, -16)
+LogoIcon.BackgroundTransparency = 1
+LogoIcon.Image = "rbxassetid://6031225818"
+LogoIcon.ImageColor3 = Theme.Accent
+
 local Title = Instance.new("TextLabel", Top)
-Title.Size = UDim2.new(0, 250, 1, 0)
-Title.Position = UDim2.new(0, 60, 0, 0)
+Title.Size = UDim2.new(0, 300, 1, 0)
+Title.Position = UDim2.new(0, 55, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Font = Enum.Font.GothamBold
 Title.Text = "CYBER-NEO HUB"
 Title.TextColor3 = Theme.Accent
 Title.TextSize = 18
-Title.TextXAlignment = "Left"
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local SubTitle = Instance.new("TextLabel", Top)
+SubTitle.Size = UDim2.new(0, 300, 0, 18)
+SubTitle.Position = UDim2.new(0, 55, 1, -22)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.Text = "Script Hub v8.0"
+SubTitle.TextColor3 = Theme.TextDim
+SubTitle.TextSize = 11
+SubTitle.TextXAlignment = Enum.TextXAlignment.Left
 
 local Min = Instance.new("TextButton", Top)
 Min.Size = UDim2.new(0, 40, 0, 40)
-Min.Position = UDim2.new(1, -50, 0.5, -20)
+Min.Position = UDim2.new(1, -55, 0.5, -20)
 Min.BackgroundColor3 = Theme.Surface
 Min.BorderSizePixel = 0
 Min.Text = "—"
 Min.Font = Enum.Font.GothamBold
 Min.TextColor3 = Theme.Warning
 Min.TextSize = 20
+Min.AutoButtonColor = false
 Corner(Min, 8)
-Min.MouseButton1Click:Connect(function() MainFrame.Visible = false Ball.Visible = true end)
+Stroke(Min, Theme.Border, 1, 0.7)
+Min.MouseEnter:Connect(function() Tween(Min, "BackgroundColor3", Theme.Warning:Lerp(Color3.new(0,0,0), 0.7)) end)
+Min.MouseLeave:Connect(function() Tween(Min, "BackgroundColor3", Theme.Surface) end)
+Min.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    Ball.Visible = true
+end)
 
--- Draggable UI
+-- Draggable topbar
 local dUI, dStart, dPos = false, nil, nil
-Top.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dUI = true dStart = i.Position dPos = MainFrame.Position end end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dUI = false end end)
+Top.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        dUI = true
+        dStart = i.Position
+        dPos = MainFrame.Position
+    end
+end)
+UserInputService.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        dUI = false
+    end
+end)
 RunService.RenderStepped:Connect(function()
     if dUI then
         local m = UserInputService:GetMouseLocation()
         local d = Vector2.new(m.X - dStart.X, m.Y - dStart.Y)
-        MainFrame.Position = UDim2.new(dPos.X.Scale, dPos.X.Offset + d.X, dPos.Y.Scale, dPos.Y.Offset + d.Y)
+        MainFrame.Position = UDim2.new(
+            dPos.X.Scale,
+            dPos.X.Offset + d.X,
+            dPos.Y.Scale,
+            dPos.Y.Offset + d.Y
+        )
     end
 end)
 
@@ -261,165 +375,613 @@ Side.Position = UDim2.new(0, 0, 0, 55)
 Side.BackgroundColor3 = Theme.Sidebar
 Side.BorderSizePixel = 0
 
+-- Sidebar right border line
+local SideLine = Instance.new("Frame", Side)
+SideLine.Size = UDim2.new(0, 2, 1, 0)
+SideLine.Position = UDim2.new(1, -2, 0, 0)
+SideLine.BackgroundColor3 = Theme.Border
+SideLine.BorderSizePixel = 0
+
 local NavCont = Instance.new("Frame", Side)
 NavCont.Size = UDim2.new(1, 0, 1, 0)
 NavCont.BackgroundTransparency = 1
+
 local NavList = Instance.new("UIListLayout", NavCont)
-NavList.HorizontalAlignment = "Center"
-NavList.Padding = UDim.new(0, 20)
+NavList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+NavList.Padding = UDim.new(0, 18)
+NavList.SortOrder = Enum.SortOrder.LayoutOrder
+
 local NavPad = Instance.new("UIPadding", NavCont)
 NavPad.PaddingTop = UDim.new(0, 25)
 
 -- ========================================
--- CONTENT
+-- CONTENT AREA
 -- ========================================
 local Cont = Instance.new("Frame", MainFrame)
 Cont.Size = UDim2.new(0.84, 0, 1, -55)
 Cont.Position = UDim2.new(0.16, 0, 0, 55)
 Cont.BackgroundTransparency = 1
+Cont.ClipsDescendants = true
+
 local CP = Instance.new("UIPadding", Cont)
 CP.PaddingLeft = UDim.new(0, 25)
 CP.PaddingRight = UDim.new(0, 25)
 CP.PaddingTop = UDim.new(0, 20)
 CP.PaddingBottom = UDim.new(0, 20)
 
+-- ========================================
+-- PAGE SYSTEM
+-- ========================================
 local Pages = {}
-local function Page(n) local p = Instance.new("Frame", Cont) p.Name = n p.Size = UDim2.new(1,0,1,0) p.BackgroundTransparency = 1 p.Visible = false Pages[n] = p return p end
-local function Switch(n) for _, p in pairs(Pages) do p.Visible = false end Pages[n].Visible = true end
+
+local function Page(n)
+    local p = Instance.new("Frame", Cont)
+    p.Name = n
+    p.Size = UDim2.new(1, 0, 1, 0)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    Pages[n] = p
+    return p
+end
+
+local function Switch(n)
+    for _, p in pairs(Pages) do
+        p.Visible = false
+    end
+    if Pages[n] then
+        Pages[n].Visible = true
+    end
+end
 
 -- ========================================
--- RUNNER
+-- PAGE HEADER HELPER
+-- ========================================
+local function PageHeader(parent, icon, title, subtitle)
+    local hFrame = Instance.new("Frame", parent)
+    hFrame.Size = UDim2.new(1, 0, 0, 38)
+    hFrame.Position = UDim2.new(0, 0, 0, 0)
+    hFrame.BackgroundTransparency = 1
+
+    local ico = Instance.new("TextLabel", hFrame)
+    ico.Size = UDim2.new(0, 30, 1, 0)
+    ico.BackgroundTransparency = 1
+    ico.Text = icon
+    ico.TextSize = 22
+    ico.Font = Enum.Font.GothamBold
+    ico.TextColor3 = Theme.Accent
+
+    local ttl = Instance.new("TextLabel", hFrame)
+    ttl.Size = UDim2.new(1, -35, 0, 22)
+    ttl.Position = UDim2.new(0, 35, 0, 0)
+    ttl.BackgroundTransparency = 1
+    ttl.Text = title
+    ttl.TextSize = 16
+    ttl.Font = Enum.Font.GothamBold
+    ttl.TextColor3 = Theme.Text
+    ttl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sub = Instance.new("TextLabel", hFrame)
+    sub.Size = UDim2.new(1, -35, 0, 16)
+    sub.Position = UDim2.new(0, 35, 0, 22)
+    sub.BackgroundTransparency = 1
+    sub.Text = subtitle
+    sub.TextSize = 11
+    sub.Font = Enum.Font.Gotham
+    sub.TextColor3 = Theme.TextDim
+    sub.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Divider line under header
+    local line = Instance.new("Frame", parent)
+    line.Size = UDim2.new(1, 0, 0, 1)
+    line.Position = UDim2.new(0, 0, 0, 42)
+    line.BackgroundColor3 = Theme.Border
+    line.BorderSizePixel = 0
+
+    return hFrame
+end
+
+-- ========================================
+-- RUNNER PAGE
 -- ========================================
 local PR = Page("Runner")
+PageHeader(PR, "▶", "Script Runner", "Execute scripts directly")
+
 local EdBg = Instance.new("Frame", PR)
-EdBg.Size = UDim2.new(1, 0, 0.75, 0)
-EdBg.Position = UDim2.new(0, 0, 0, 40)
+EdBg.Size = UDim2.new(1, 0, 1, -110)
+EdBg.Position = UDim2.new(0, 0, 0, 52)
 EdBg.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
 EdBg.BorderSizePixel = 0
 Corner(EdBg, 12)
-Stroke(EdBg, Theme.Border, 1.5, 0.6)
+Stroke(EdBg, Theme.Border, 1.5, 0.5)
+
+-- Line numbers frame
+local LineNums = Instance.new("Frame", EdBg)
+LineNums.Size = UDim2.new(0, 35, 1, 0)
+LineNums.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
+LineNums.BorderSizePixel = 0
+Corner(LineNums, 12)
+
+local LineNumFix = Instance.new("Frame", LineNums)
+LineNumFix.Size = UDim2.new(0, 12, 1, 0)
+LineNumFix.Position = UDim2.new(1, -12, 0, 0)
+LineNumFix.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
+LineNumFix.BorderSizePixel = 0
 
 local Code = Instance.new("TextBox", EdBg)
-Code.Size = UDim2.new(1, -20, 1, -20)
-Code.Position = UDim2.new(0, 10, 0, 10)
+Code.Size = UDim2.new(1, -50, 1, -20)
+Code.Position = UDim2.new(0, 42, 0, 10)
 Code.BackgroundTransparency = 1
 Code.Font = Enum.Font.Code
-Code.Text = "print('Cyber-Neo Hub')"
+Code.Text = "-- Welcome to Cyber-Neo Hub!\nprint('Hello World')"
 Code.TextColor3 = Theme.Accent
 Code.TextSize = 13
-Code.TextXAlignment = "Left"
-Code.TextYAlignment = "Top"
+Code.TextXAlignment = Enum.TextXAlignment.Left
+Code.TextYAlignment = Enum.TextYAlignment.Top
 Code.MultiLine = true
 Code.ClearTextOnFocus = false
 
-local BCont = Instance.new("Frame", PR)
-BCont.Size = UDim2.new(1, 0, 0, 50)
-BCont.Position = UDim2.new(0, 0, 1, -50)
-BCont.BackgroundTransparency = 1
-local BL = Instance.new("UIListLayout", BCont)
-BL.FillDirection = "Horizontal"
-BL.Padding = UDim.new(0, 15)
-BL.HorizontalAlignment = "Center"
+local RunBtnCont = Instance.new("Frame", PR)
+RunBtnCont.Size = UDim2.new(1, 0, 0, 50)
+RunBtnCont.Position = UDim2.new(0, 0, 1, -52)
+RunBtnCont.BackgroundTransparency = 1
 
-local Exec = Btn(BCont, "▶ EXECUTE", function() pcall(function() loadstring(Code.Text)() end) end, "Success")
-Exec.Size = UDim2.new(0.3, 0, 1, 0)
-local Clear = Btn(BCont, "⌧ CLEAR", function() Code.Text = "" end, "Danger")
-Clear.Size = UDim2.new(0.3, 0, 1, 0)
+local RunBL = Instance.new("UIListLayout", RunBtnCont)
+RunBL.FillDirection = Enum.FillDirection.Horizontal
+RunBL.Padding = UDim.new(0, 12)
+RunBL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+RunBL.VerticalAlignment = Enum.VerticalAlignment.Center
+
+local Exec = Btn(RunBtnCont, "▶  EXECUTE", function()
+    local ok, err = pcall(function()
+        loadstring(Code.Text)()
+    end)
+    if not ok then
+        warn("[Cyber-Neo] Error: " .. tostring(err))
+    end
+end, "Success")
+Exec.Size = UDim2.new(0.35, 0, 0, 42)
+
+local Clear = Btn(RunBtnCont, "⌧  CLEAR", function()
+    Code.Text = ""
+end, "Danger")
+Clear.Size = UDim2.new(0.25, 0, 0, 42)
+
+local Copy = Btn(RunBtnCont, "⎘  COPY", function()
+    setclipboard(Code.Text)
+end, "Secondary")
+Copy.Size = UDim2.new(0.25, 0, 0, 42)
 
 -- ========================================
--- ADD
+-- ADD PAGE
 -- ========================================
 local PA = Page("Add")
-local NameIn = TBox(PA, "Script Name")
-NameIn.Size = UDim2.new(1, 0, 0, 50)
-NameIn.Position = UDim2.new(0, 0, 0, 40)
+PageHeader(PA, "＋", "Add Script", "Save a new script to your hub")
 
-local CodeIn = TBox(PA, "Code...", true)
-CodeIn.Size = UDim2.new(1, 0, 0.6, 0)
-CodeIn.Position = UDim2.new(0, 0, 0, 100)
+local NameIn = TBox(PA, "📝  Script Name...")
+NameIn.Size = UDim2.new(1, 0, 0, 45)
+NameIn.Position = UDim2.new(0, 0, 0, 52)
+
+local NameLabel = Instance.new("TextLabel", PA)
+NameLabel.Size = UDim2.new(1, 0, 0, 16)
+NameLabel.Position = UDim2.new(0, 5, 0, 100)
+NameLabel.BackgroundTransparency = 1
+NameLabel.Text = "Script Code"
+NameLabel.TextColor3 = Theme.TextDim
+NameLabel.Font = Enum.Font.Gotham
+NameLabel.TextSize = 11
+NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local CodeIn = TBox(PA, "-- Paste your script here...", true)
+CodeIn.Size = UDim2.new(1, 0, 1, -230)
+CodeIn.Position = UDim2.new(0, 0, 0, 118)
 CodeIn.Font = Enum.Font.Code
+CodeIn.TextSize = 12
 
-local Save = Btn(PA, "💾 SAVE", function()
+local SaveBtn = Btn(PA, "💾  SAVE SCRIPT", function()
     if NameIn.Text ~= "" and CodeIn.Text ~= "" then
-        writefile(MAIN_FOLDER.."/"..NameIn.Text, CodeIn.Text)
+        local fname = NameIn.Text
+        if not fname:find("%.") then
+            fname = fname .. ".lua"
+        end
+        writefile(MAIN_FOLDER .. "/" .. fname, CodeIn.Text)
         NameIn.Text = ""
         CodeIn.Text = ""
         Switch("Saved")
     end
 end, "Primary")
-Save.Size = UDim2.new(1, 0, 0, 50)
-Save.Position = UDim2.new(0, 0, 1, -50)
+SaveBtn.Size = UDim2.new(1, 0, 0, 48)
+SaveBtn.Position = UDim2.new(0, 0, 1, -52)
 
 -- ========================================
--- SAVED
+-- SAVED PAGE
 -- ========================================
 local PS = Page("Saved")
+PageHeader(PS, "📁", "Saved Scripts", "Your saved scripts library")
+
+local RefreshBtn = Btn(PS, "↻", nil, "Secondary")
+RefreshBtn.Size = UDim2.new(0, 38, 0, 28)
+RefreshBtn.Position = UDim2.new(1, -40, 0, 7)
+RefreshBtn.TextSize = 18
+
 local Scroll = Instance.new("ScrollingFrame", PS)
-Scroll.Size = UDim2.new(1, 0, 1, -40)
-Scroll.Position = UDim2.new(0, 0, 0, 40)
+Scroll.Size = UDim2.new(1, 0, 1, -52)
+Scroll.Position = UDim2.new(0, 0, 0, 52)
 Scroll.BackgroundTransparency = 1
 Scroll.BorderSizePixel = 0
 Scroll.ScrollBarThickness = 5
+Scroll.ScrollBarImageColor3 = Theme.Primary
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
+Scroll.ClipsDescendants = true
+Scroll.ScrollingDirection = Enum.ScrollingDirection.Y
+Scroll.ElasticBehavior = Enum.ElasticBehavior.Never
+
 local SL = Instance.new("UIListLayout", Scroll)
 SL.Padding = UDim.new(0, 10)
+SL.SortOrder = Enum.SortOrder.LayoutOrder
+SL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local SLPad = Instance.new("UIPadding", Scroll)
+SLPad.PaddingTop = UDim.new(0, 5)
+SLPad.PaddingBottom = UDim.new(0, 10)
+SLPad.PaddingLeft = UDim.new(0, 2)
+SLPad.PaddingRight = UDim.new(0, 8)
 
 local function Refresh()
-    for _, c in pairs(Scroll:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
-    for _, path in pairs(listfiles(MAIN_FOLDER)) do
-        local name = path:gsub(MAIN_FOLDER.."/", "")
+    -- Clear old cards
+    for _, c in pairs(Scroll:GetChildren()) do
+        if c:IsA("Frame") then
+            c:Destroy()
+        end
+    end
+
+    local ok, files = pcall(listfiles, MAIN_FOLDER)
+    if not ok or #files == 0 then
+        local empty = Instance.new("Frame", Scroll)
+        empty.Size = UDim2.new(1, -10, 0, 80)
+        empty.BackgroundColor3 = Theme.Surface
+        empty.BorderSizePixel = 0
+        Corner(empty, 10)
+        Stroke(empty, Theme.Border, 1, 0.7)
+
+        local emptyLbl = Instance.new("TextLabel", empty)
+        emptyLbl.Size = UDim2.new(1, 0, 1, 0)
+        emptyLbl.BackgroundTransparency = 1
+        emptyLbl.Text = "No saved scripts yet.\nGo to Add tab to save one!"
+        emptyLbl.TextColor3 = Theme.TextDim
+        emptyLbl.Font = Enum.Font.GothamItalic
+        emptyLbl.TextSize = 13
+        return
+    end
+
+    for i, path in ipairs(files) do
+        local name = path:match("([^/\\]+)$") or path
+
         local card = Instance.new("Frame", Scroll)
-        card.Size = UDim2.new(1, -8, 0, 60)
+        card.Name = "Card_" .. i
+        card.Size = UDim2.new(1, -10, 0, 68)
         card.BackgroundColor3 = Theme.Surface
         card.BorderSizePixel = 0
+        card.LayoutOrder = i
         Corner(card, 10)
-        
+        Stroke(card, Theme.Border, 1, 0.6)
+
+        -- Hover effect
+        local hover = Instance.new("Frame", card)
+        hover.Size = UDim2.new(1, 0, 1, 0)
+        hover.BackgroundColor3 = Theme.Primary
+        hover.BackgroundTransparency = 1
+        hover.BorderSizePixel = 0
+        Corner(hover, 10)
+
+        -- Index number badge
+        local badge = Instance.new("Frame", card)
+        badge.Size = UDim2.new(0, 28, 0, 28)
+        badge.Position = UDim2.new(0, 12, 0.5, -14)
+        badge.BackgroundColor3 = Theme.Primary
+        badge.BackgroundTransparency = 0.7
+        badge.BorderSizePixel = 0
+        Corner(badge, 6)
+
+        local badgeNum = Instance.new("TextLabel", badge)
+        badgeNum.Size = UDim2.new(1, 0, 1, 0)
+        badgeNum.BackgroundTransparency = 1
+        badgeNum.Text = tostring(i)
+        badgeNum.TextColor3 = Theme.Accent
+        badgeNum.Font = Enum.Font.GothamBold
+        badgeNum.TextSize = 11
+
+        -- Script name
         local lbl = Instance.new("TextLabel", card)
-        lbl.Size = UDim2.new(0.6, 0, 1, 0)
+        lbl.Size = UDim2.new(1, -165, 0, 28)
+        lbl.Position = UDim2.new(0, 50, 0, 12)
         lbl.BackgroundTransparency = 1
-        lbl.Text = "  " .. name
+        lbl.Text = name
         lbl.TextColor3 = Theme.Text
         lbl.Font = Enum.Font.GothamBold
-        lbl.TextXAlignment = "Left"
-        
-        local run = Btn(card, "▶", function() loadstring(readfile(path))() end, "Success")
-        run.Size = UDim2.new(0, 50, 0.7, 0)
-        run.Position = UDim2.new(1, -120, 0.15, 0)
-        
-        local del = Btn(card, "🗑", function() delfile(path) Refresh() end, "Danger")
-        del.Size = UDim2.new(0, 50, 0.7, 0)
-        del.Position = UDim2.new(1, -60, 0.15, 0)
+        lbl.TextSize = 13
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.TextTruncate = Enum.TextTruncate.AtEnd
+
+        -- File path dim label
+        local pathLbl = Instance.new("TextLabel", card)
+        pathLbl.Size = UDim2.new(1, -165, 0, 18)
+        pathLbl.Position = UDim2.new(0, 50, 0, 38)
+        pathLbl.BackgroundTransparency = 1
+        pathLbl.Text = MAIN_FOLDER .. "/" .. name
+        pathLbl.TextColor3 = Theme.TextDim
+        pathLbl.Font = Enum.Font.Gotham
+        pathLbl.TextSize = 10
+        pathLbl.TextXAlignment = Enum.TextXAlignment.Left
+        pathLbl.TextTruncate = Enum.TextTruncate.AtEnd
+
+        -- Run button
+        local run = Btn(card, "▶", function()
+            local runOk, runErr = pcall(function()
+                loadstring(readfile(path))()
+            end)
+            if not runOk then
+                warn("[Cyber-Neo] Script Error: " .. tostring(runErr))
+            end
+        end, "Success")
+        run.Size = UDim2.new(0, 65, 0, 38)
+        run.Position = UDim2.new(1, -148, 0.5, -19)
+        run.TextSize = 14
+
+        -- Load into editor button
+        local edit = Btn(card, "✎", function()
+            Code.Text = readfile(path)
+            Switch("Runner")
+        end, "Secondary")
+        edit.Size = UDim2.new(0, 38, 0, 38)
+        edit.Position = UDim2.new(1, -78, 0.5, -19)
+        edit.TextSize = 16
+
+        -- Delete button
+        local del = Btn(card, "🗑", function()
+            delfile(path)
+            Refresh()
+        end, "Danger")
+        del.Size = UDim2.new(0, 38, 0, 38)
+        del.Position = UDim2.new(1, -35, 0.5, -19)
+        del.TextSize = 14
     end
 end
 
+RefreshBtn.MouseButton1Click:Connect(Refresh)
+
 -- ========================================
--- SEARCH
+-- SEARCH PAGE
 -- ========================================
 local PSe = Page("Search")
-local SIn = TBox(PSe, "Search...")
-SIn.Size = UDim2.new(1, 0, 0, 50)
-SIn.Position = UDim2.new(0, 0, 0, 40)
+PageHeader(PSe, "🔍", "Search Scripts", "Find your saved scripts quickly")
 
--- ========================================
--- NAV
--- ========================================
-local navBtns = {}
-local function Nav(icon, page, ord)
-    local b = IconBtn(NavCont, icon)
-    b.Size = UDim2.new(0, 52, 0, 52)
-    b.LayoutOrder = ord
-    b.MouseButton1Click:Connect(function() Switch(page) for _, n in pairs(navBtns) do Tween(n, "BackgroundColor3", Theme.Surface) end Tween(b, "BackgroundColor3", Theme.Primary) end)
-    table.insert(navBtns, b)
+local SIn = TBox(PSe, "🔍  Search by name...")
+SIn.Size = UDim2.new(1, 0, 0, 45)
+SIn.Position = UDim2.new(0, 0, 0, 52)
+
+local SearchScroll = Instance.new("ScrollingFrame", PSe)
+SearchScroll.Size = UDim2.new(1, 0, 1, -110)
+SearchScroll.Position = UDim2.new(0, 0, 0, 110)
+SearchScroll.BackgroundTransparency = 1
+SearchScroll.BorderSizePixel = 0
+SearchScroll.ScrollBarThickness = 5
+SearchScroll.ScrollBarImageColor3 = Theme.Primary
+SearchScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+SearchScroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
+SearchScroll.ClipsDescendants = true
+SearchScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+
+local SSL = Instance.new("UIListLayout", SearchScroll)
+SSL.Padding = UDim.new(0, 10)
+SSL.SortOrder = Enum.SortOrder.LayoutOrder
+SSL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local SSLPad = Instance.new("UIPadding", SearchScroll)
+SSLPad.PaddingTop = UDim.new(0, 5)
+SSLPad.PaddingBottom = UDim.new(0, 10)
+SSLPad.PaddingLeft = UDim.new(0, 2)
+SSLPad.PaddingRight = UDim.new(0, 8)
+
+local function DoSearch(query)
+    for _, c in pairs(SearchScroll:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+
+    local ok, files = pcall(listfiles, MAIN_FOLDER)
+    if not ok then return end
+
+    local count = 0
+    for i, path in ipairs(files) do
+        local name = path:match("([^/\\]+)$") or path
+        if query == "" or name:lower():find(query:lower(), 1, true) then
+            count = count + 1
+            local card = Instance.new("Frame", SearchScroll)
+            card.Name = "SCard_" .. i
+            card.Size = UDim2.new(1, -10, 0, 65)
+            card.BackgroundColor3 = Theme.Surface
+            card.BorderSizePixel = 0
+            card.LayoutOrder = count
+            Corner(card, 10)
+            Stroke(card, Theme.Border, 1, 0.6)
+
+            local lbl = Instance.new("TextLabel", card)
+            lbl.Size = UDim2.new(1, -130, 1, 0)
+            lbl.Position = UDim2.new(0, 12, 0, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "📄 " .. name
+            lbl.TextColor3 = Theme.Text
+            lbl.Font = Enum.Font.GothamBold
+            lbl.TextSize = 13
+            lbl.TextXAlignment = Enum.TextXAlignment.Left
+            lbl.TextTruncate = Enum.TextTruncate.AtEnd
+
+            local run = Btn(card, "▶ RUN", function()
+                pcall(function() loadstring(readfile(path))() end)
+            end, "Success")
+            run.Size = UDim2.new(0, 80, 0, 38)
+            run.Position = UDim2.new(1, -120, 0.5, -19)
+            run.TextSize = 12
+
+            local loadBtn = Btn(card, "✎", function()
+                Code.Text = readfile(path)
+                Switch("Runner")
+            end, "Secondary")
+            loadBtn.Size = UDim2.new(0, 35, 0, 38)
+            loadBtn.Position = UDim2.new(1, -35, 0.5, -19)
+            loadBtn.TextSize = 14
+        end
+    end
+
+    if count == 0 then
+        local noResult = Instance.new("Frame", SearchScroll)
+        noResult.Size = UDim2.new(1, -10, 0, 60)
+        noResult.BackgroundColor3 = Theme.Surface
+        noResult.BorderSizePixel = 0
+        Corner(noResult, 10)
+        local noLbl = Instance.new("TextLabel", noResult)
+        noLbl.Size = UDim2.new(1, 0, 1, 0)
+        noLbl.BackgroundTransparency = 1
+        noLbl.Text = 'No scripts found for "' .. query .. '"'
+        noLbl.TextColor3 = Theme.TextDim
+        noLbl.Font = Enum.Font.GothamItalic
+        noLbl.TextSize = 13
+    end
 end
 
-Nav("rbxassetid://6031154871", "Search", 1)
-Nav("rbxassetid://6035043449", "Add", 2)
-Nav("rbxassetid://6034823313", "Runner", 3)
-Nav("rbxassetid://6031155054", "Saved", 4)
+SIn:GetPropertyChangedSignal("Text"):Connect(function()
+    DoSearch(SIn.Text)
+end)
 
 -- ========================================
--- START
+-- SETTINGS PAGE
+-- ========================================
+local PSt = Page("Settings")
+PageHeader(PSt, "⚙", "Settings", "Configure your hub")
+
+local function SettingRow(parent, yPos, label, desc)
+    local row = Instance.new("Frame", parent)
+    row.Size = UDim2.new(1, 0, 0, 62)
+    row.Position = UDim2.new(0, 0, 0, yPos)
+    row.BackgroundColor3 = Theme.Surface
+    row.BorderSizePixel = 0
+    Corner(row, 10)
+    Stroke(row, Theme.Border, 1, 0.7)
+
+    local lbl = Instance.new("TextLabel", row)
+    lbl.Size = UDim2.new(0.6, 0, 0, 28)
+    lbl.Position = UDim2.new(0, 15, 0, 8)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = label
+    lbl.TextColor3 = Theme.Text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local descLbl = Instance.new("TextLabel", row)
+    descLbl.Size = UDim2.new(0.6, 0, 0, 20)
+    descLbl.Position = UDim2.new(0, 15, 0, 34)
+    descLbl.BackgroundTransparency = 1
+    descLbl.Text = desc
+    descLbl.TextColor3 = Theme.TextDim
+    descLbl.Font = Enum.Font.Gotham
+    descLbl.TextSize = 10
+    descLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    return row
+end
+
+local r1 = SettingRow(PSt, 52, "Hub Folder", MAIN_FOLDER)
+local r1Lbl = Instance.new("TextLabel", r1)
+r1Lbl.Size = UDim2.new(0.35, 0, 1, 0)
+r1Lbl.Position = UDim2.new(0.63, 0, 0, 0)
+r1Lbl.BackgroundTransparency = 1
+r1Lbl.Text = MAIN_FOLDER
+r1Lbl.TextColor3 = Theme.Accent
+r1Lbl.Font = Enum.Font.Code
+r1Lbl.TextSize = 11
+
+local r2 = SettingRow(PSt, 124, "Clear All Scripts", "Remove all saved scripts")
+local clearAll = Btn(r2, "Clear All", function()
+    local ok, files = pcall(listfiles, MAIN_FOLDER)
+    if ok then
+        for _, path in ipairs(files) do
+            pcall(delfile, path)
+        end
+        Refresh()
+    end
+end, "Danger")
+clearAll.Size = UDim2.new(0.3, 0, 0, 36)
+clearAll.Position = UDim2.new(0.68, 0, 0.5, -18)
+clearAll.TextSize = 12
+
+local r3 = SettingRow(PSt, 196, "Version", "Cyber-Neo Hub")
+local verLbl = Instance.new("TextLabel", r3)
+verLbl.Size = UDim2.new(0.35, 0, 1, 0)
+verLbl.Position = UDim2.new(0.63, 0, 0, 0)
+verLbl.BackgroundTransparency = 1
+verLbl.Text = "v8.0 FIXED"
+verLbl.TextColor3 = Theme.Success
+verLbl.Font = Enum.Font.GothamBold
+verLbl.TextSize = 13
+
+-- ========================================
+-- NAV BUTTONS
+-- ========================================
+local navBtns = {}
+
+local function Nav(icon, page, ord, tip)
+    local wrapper = Instance.new("Frame", NavCont)
+    wrapper.Size = UDim2.new(0, 52, 0, 65)
+    wrapper.BackgroundTransparency = 1
+    wrapper.LayoutOrder = ord
+
+    local b = IconBtn(wrapper, icon)
+    b.Size = UDim2.new(0, 52, 0, 52)
+    b.Position = UDim2.new(0, 0, 0, 0)
+
+    local tipLbl = Instance.new("TextLabel", wrapper)
+    tipLbl.Size = UDim2.new(1, 0, 0, 12)
+    tipLbl.Position = UDim2.new(0, 0, 0, 53)
+    tipLbl.BackgroundTransparency = 1
+    tipLbl.Text = tip
+    tipLbl.TextColor3 = Theme.TextDim
+    tipLbl.Font = Enum.Font.Gotham
+    tipLbl.TextSize = 9
+
+    b.MouseButton1Click:Connect(function()
+        Switch(page)
+        for _, n in pairs(navBtns) do
+            Tween(n, "BackgroundColor3", Theme.Surface)
+        end
+        Tween(b, "BackgroundColor3", Theme.Primary)
+        tipLbl.TextColor3 = Theme.Accent
+        for _, other in pairs(NavCont:GetChildren()) do
+            if other:IsA("Frame") and other ~= wrapper then
+                local otherTip = other:FindFirstChildWhichIsA("TextLabel")
+                if otherTip then otherTip.TextColor3 = Theme.TextDim end
+            end
+        end
+    end)
+
+    table.insert(navBtns, b)
+    return b
+end
+
+local n1 = Nav("rbxassetid://6031154871", "Search", 1, "Search")
+local n2 = Nav("rbxassetid://6035043449", "Add", 2, "Add")
+local n3 = Nav("rbxassetid://6034823313", "Runner", 3, "Runner")
+local n4 = Nav("rbxassetid://6031155054", "Saved", 4, "Saved")
+local n5 = Nav("rbxassetid://6031225819", "Settings", 5, "Settings")
+
+-- ========================================
+-- STARTUP
 -- ========================================
 Switch("Runner")
 Refresh()
-Tween(navBtns[3], "BackgroundColor3", Theme.Primary)
-print("✅ Cyber-Neo Hub v7.0 FINAL - Loaded!")
+DoSearch("")
+
+-- Highlight runner nav on start
+Tween(n3, "BackgroundColor3", Theme.Primary)
+
+print("✅ Cyber-Neo Hub v8.0 FIXED - Loaded Successfully!")
