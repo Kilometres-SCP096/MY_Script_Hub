@@ -1,0 +1,305 @@
+-- [[ NEO-TECH SCRIPT HUB V3 ]] --
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+
+-- Folder Config
+local MAIN_FOLDER = "MY_Script_Hub"
+local ICON_FOLDER = "MY_Script_Hub_Icon"
+if not isfolder(MAIN_FOLDER) then makefolder(MAIN_FOLDER) end
+if not isfolder(ICON_FOLDER) then makefolder(ICON_FOLDER) end
+
+-- Utility: Smooth Dragging
+local function MakeDraggable(frame, parent)
+	local dragging, dragInput, dragStart, startPos
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = parent.Position
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+	end)
+	RunService.RenderStepped:Connect(function()
+		if dragging and dragInput then
+			local delta = dragInput.Position - dragStart
+			parent.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+	end)
+end
+
+-- UI Initialization
+local SG = Instance.new("ScreenGui", CoreGui)
+SG.Name = "NeoScriptHub"
+
+-- [[ FLOATING TOGGLE BALL ]] --
+local BallContainer = Instance.new("Frame", SG)
+BallContainer.Size = UDim2.new(0, 60, 0, 60)
+BallContainer.Position = UDim2.new(0.1, 0, 0.1, 0)
+BallContainer.BackgroundTransparency = 1
+BallContainer.Visible = false
+
+local Ball = Instance.new("ImageButton", BallContainer)
+Ball.Size = UDim2.new(1, 0, 1, 0)
+Ball.BackgroundColor3 = Color3.fromRGB(180, 100, 255)
+Ball.Image = "rbxassetid://6031225818" -- Tech circle icon
+Instance.new("UICorner", Ball).CornerRadius = UDim.new(1, 0)
+local BallGlow = Instance.new("UIStroke", Ball)
+BallGlow.Color = Color3.fromRGB(200, 150, 255)
+BallGlow.Thickness = 2
+
+MakeDraggable(Ball, BallContainer)
+
+-- [[ MAIN UI FRAME ]] --
+local Main = Instance.new("Frame", SG)
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 580, 0, 435) -- Perfect 4:3
+Main.Position = UDim2.new(0.5, -290, 0.5, -217)
+Main.BackgroundColor3 = Color3.fromRGB(15, 12, 20)
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Color3.fromRGB(60, 40, 100)
+MainStroke.Thickness = 2
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+-- Sidebar (16%)
+local Sidebar = Instance.new("Frame", Main)
+Sidebar.Size = UDim2.new(0.16, 0, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+Sidebar.BorderSizePixel = 0
+
+local SideLine = Instance.new("Frame", Sidebar)
+SideLine.Size = UDim2.new(0, 2, 1, 0)
+SideLine.Position = UDim2.new(1, 0, 0, 0)
+SideLine.BackgroundColor3 = Color3.fromRGB(180, 100, 255)
+SideLine.BorderSizePixel = 0
+
+-- Content Area (84%)
+local Container = Instance.new("Frame", Main)
+Container.Size = UDim2.new(0.84, 0, 1, 0)
+Container.Position = UDim2.new(0.16, 0, 0, 0)
+Container.BackgroundTransparency = 1
+
+-- Sidebar Nav Icons
+local NavLayout = Instance.new("UIListLayout", Sidebar)
+NavLayout.Padding = UDim.new(0, 20)
+NavLayout.HorizontalAlignment = "Center"
+Instance.new("UIPadding", Sidebar).PaddingTop = UDim.new(0, 30)
+
+local function CreateNavBtn(name, iconID)
+    local btn = Instance.new("ImageButton", Sidebar)
+    btn.Name = name
+    btn.Size = UDim2.new(0, 35, 0, 35)
+    btn.BackgroundTransparency = 1
+    btn.Image = "rbxassetid://" .. iconID
+    btn.ImageColor3 = Color3.fromRGB(150, 120, 200)
+    
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(150, 120, 200)}):Play()
+    end)
+    return btn
+end
+
+local bSearch = CreateNavBtn("Search", "6031154871")
+local bAdd = CreateNavBtn("Add", "6035043449")
+local bRun = CreateNavBtn("Runner", "6034823313")
+local bSaved = CreateNavBtn("Saved", "6031155054")
+
+-- Pages Setup
+local Pages = {}
+local function CreatePage(name)
+    local f = Instance.new("Frame", Container)
+    f.Name = name
+    f.Size = UDim2.new(1, 0, 1, 0)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    Pages[name] = f
+    return f
+end
+
+-- [[ RUNNER PAGE ]] --
+local P_Runner = CreatePage("Runner")
+local CodeEditor = Instance.new("TextBox", P_Runner)
+CodeEditor.Size = UDim2.new(0.9, 0, 0.7, 0)
+CodeEditor.Position = UDim2.new(0.05, 0, 0.05, 0)
+CodeEditor.BackgroundColor3 = Color3.fromRGB(10, 8, 15)
+CodeEditor.TextColor3 = Color3.fromRGB(200, 200, 200)
+CodeEditor.Font = Enum.Font.Code
+CodeEditor.TextSize = 14
+CodeEditor.TextXAlignment = "Left"
+CodeEditor.TextYAlignment = "Top"
+CodeEditor.MultiLine = true
+CodeEditor.ClearTextOnFocus = false
+CodeEditor.Text = "-- Welcome to Neo-Tech"
+Instance.new("UICorner", CodeEditor)
+Instance.new("UIStroke", CodeEditor).Color = Color3.fromRGB(40, 30, 60)
+
+local RunBar = Instance.new("Frame", P_Runner)
+RunBar.Size = UDim2.new(0.9, 0, 0, 50)
+RunBar.Position = UDim2.new(0.05, 0, 0.8, 0)
+RunBar.BackgroundTransparency = 1
+
+local function TechBtn(txt, color, x)
+    local b = Instance.new("TextButton", RunBar)
+    b.Size = UDim2.new(0.3, 0, 1, 0)
+    b.Position = UDim2.new(x, 0, 0, 0)
+    b.BackgroundColor3 = color
+    b.Text = txt
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", b)
+    return b
+end
+
+local btn_Run = TechBtn("EXECUTE", Color3.fromRGB(80, 40, 150), 0)
+local btn_Clear = TechBtn("CLEAR", Color3.fromRGB(150, 40, 40), 0.35)
+local btn_ToSave = TechBtn("TRANSFER", Color3.fromRGB(40, 120, 80), 0.7)
+
+-- [[ ADD SCRIPT PAGE ]] --
+local P_Add = CreatePage("Add")
+local NameIn = Instance.new("TextBox", P_Add)
+NameIn.Size = UDim2.new(0.9, 0, 0, 40)
+NameIn.Position = UDim2.new(0.05, 0, 0.1, 0)
+NameIn.PlaceholderText = "Script Name..."
+NameIn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+NameIn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", NameIn)
+
+local CodeIn = CodeEditor:Clone()
+CodeIn.Parent = P_Add
+CodeIn.Size = UDim2.new(0.9, 0, 0.5, 0)
+CodeIn.Position = UDim2.new(0.05, 0, 0.25, 0)
+CodeIn.Text = ""
+
+local btn_FinalSave = TechBtn("SAVE TO FILE", Color3.fromRGB(100, 50, 200), 0.05)
+btn_FinalSave.Parent = P_Add
+btn_FinalSave.Position = UDim2.new(0.05, 0, 0.8, 0)
+btn_FinalSave.Size = UDim2.new(0.9, 0, 0, 50)
+
+-- [[ SAVED PAGE & POPUP ]] --
+local P_Saved = CreatePage("Saved")
+local Scroll = Instance.new("ScrollingFrame", P_Saved)
+Scroll.Size = UDim2.new(0.9, 0, 0.9, 0)
+Scroll.Position = UDim2.new(0.05, 0, 0.05, 0)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0,0,0,0)
+Scroll.AutomaticCanvasSize = "Y"
+Scroll.ScrollBarThickness = 2
+Instance.new("UIListLayout", Scroll).Padding = UDim.new(0, 10)
+
+-- [[ SEARCH PAGE ]] --
+local P_Search = CreatePage("Search")
+local SBox = NameIn:Clone()
+SBox.Parent = P_Search
+SBox.PlaceholderText = "Search Scripts..."
+SBox.Position = UDim2.new(0.05, 0, 0.05, 0)
+
+local ModeBtn = TechBtn("MODE: LOCAL", Color3.fromRGB(60, 40, 100), 0.05)
+ModeBtn.Parent = P_Search
+ModeBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+
+-- Logic: Switching Pages
+local function Switch(name)
+    for _, p in pairs(Pages) do p.Visible = false end
+    Pages[name].Visible = true
+end
+
+-- Logic: Saved Scripts
+local function LoadFiles()
+    for _, v in pairs(Scroll:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end
+    local files = listfiles(MAIN_FOLDER)
+    for _, path in pairs(files) do
+        local name = path:gsub(MAIN_FOLDER.."/", "")
+        local row = Instance.new("Frame", Scroll)
+        row.Size = UDim2.new(1, 0, 0, 50)
+        row.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+        Instance.new("UICorner", row)
+        
+        local label = Instance.new("TextLabel", row)
+        label.Text = "  " .. name
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextColor3 = Color3.new(1,1,1)
+        label.TextXAlignment = "Left"
+        
+        local run = TechBtn("RUN", Color3.fromRGB(80, 150, 80), 0.6)
+        run.Parent = row; run.Size = UDim2.new(0, 60, 0.7, 0); run.Position = UDim2.new(0.6, 0, 0.15, 0)
+        
+        local del = TechBtn("DEL", Color3.fromRGB(150, 50, 50), 0.8)
+        del.Parent = row; del.Size = UDim2.new(0, 60, 0.7, 0); del.Position = UDim2.new(0.8, 0, 0.15, 0)
+        
+        run.MouseButton1Click:Connect(function() loadstring(readfile(path))() end)
+        del.MouseButton1Click:Connect(function()
+            -- Pop Up
+            local pop = Instance.new("Frame", SG)
+            pop.Size = UDim2.new(0, 250, 0, 120)
+            pop.Position = UDim2.new(0.5, -125, 0.5, -60)
+            pop.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            Instance.new("UIStroke", pop).Color = Color3.fromRGB(200, 50, 50)
+            Instance.new("UICorner", pop)
+            
+            local t = Instance.new("TextLabel", pop)
+            t.Text = "Delete Script?"
+            t.Size = UDim2.new(1,0,0.5,0); t.TextColor3 = Color3.new(1,1,1); t.BackgroundTransparency = 1
+            
+            local ok = TechBtn("YES", Color3.fromRGB(150, 50, 50), 0.1)
+            ok.Parent = pop; ok.Size = UDim2.new(0.35, 0, 0.3, 0); ok.Position = UDim2.new(0.1, 0, 0.6, 0)
+            
+            local no = TechBtn("NO", Color3.fromRGB(80, 80, 80), 0.55)
+            no.Parent = pop; no.Size = UDim2.new(0.35, 0, 0.3, 0); no.Position = UDim2.new(0.55, 0, 0.6, 0)
+            
+            ok.MouseButton1Click:Connect(function() delfile(path); pop:Destroy(); LoadFiles() end)
+            no.MouseButton1Click:Connect(function() pop:Destroy() end)
+        end)
+    end
+end
+
+-- Navigation Connections
+bSearch.MouseButton1Click:Connect(function() Switch("Search") end)
+bAdd.MouseButton1Click:Connect(function() Switch("Add") end)
+bRun.MouseButton1Click:Connect(function() Switch("Runner") end)
+bSaved.MouseButton1Click:Connect(function() Switch("Saved"); LoadFiles() end)
+
+-- Feature Connections
+btn_Run.MouseButton1Click:Connect(function() loadstring(CodeEditor.Text)() end)
+btn_Clear.MouseButton1Click:Connect(function() CodeEditor.Text = "" end)
+btn_ToSave.MouseButton1Click:Connect(function() CodeIn.Text = CodeEditor.Text; Switch("Add") end)
+btn_FinalSave.MouseButton1Click:Connect(function()
+    if NameIn.Text ~= "" then
+        writefile(MAIN_FOLDER .. "/" .. NameIn.Text, CodeIn.Text)
+        NameIn.Text = ""; CodeIn.Text = ""
+        Switch("Saved"); LoadFiles()
+    end
+end)
+
+-- Minimize Button (Tech style)
+local MinBtn = Instance.new("TextButton", Sidebar)
+MinBtn.Size = UDim2.new(0, 35, 0, 35)
+MinBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+MinBtn.Text = "X"
+MinBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", MinBtn)
+
+MinBtn.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    BallContainer.Visible = true
+end)
+
+Ball.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    BallContainer.Visible = false
+end)
+
+Switch("Runner")
+print("Neo-Tech Loaded.")
