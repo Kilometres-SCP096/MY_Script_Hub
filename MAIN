@@ -1,192 +1,256 @@
+--// CYBER-EXECUTIVE HUB (MOBILE OPTIMIZED) //--
+
+--// SERVICES
+local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local folderPath = "My_Script_Hub/"
-if not isfolder(folderPath) then makefolder(folderPath) end
+local player = Players.LocalPlayer
 
--- // 1. CLEANUP // --
-if CoreGui:FindFirstChild("StrongerHub_Final") then
-    CoreGui.StrongerHub_Final:Destroy()
+--// VARIABLES
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CyberExecHub"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.DisplayOrder = 100
+ScreenGui.IgnoreGuiInset = true
+
+local existingButtons = {}
+local currentTab = "Search"
+
+--// COLORS
+local BG = Color3.fromRGB(10,10,10)
+local ACCENT = Color3.fromRGB(138,43,226)
+
+--// MAIN FRAME
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 320, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
+MainFrame.BackgroundColor3 = BG
+MainFrame.ZIndex = 1
+MainFrame.Parent = ScreenGui
+
+--// DRAGGING
+local dragging, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+--// SIDEBAR
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 80, 1, 0)
+Sidebar.BackgroundColor3 = BG
+Sidebar.ZIndex = 5
+Sidebar.Parent = MainFrame
+
+local function createTabButton(name, pos)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1,0,0,40)
+	btn.Position = UDim2.new(0,0,0,pos)
+	btn.Text = name
+	btn.BackgroundColor3 = BG
+	btn.TextColor3 = ACCENT
+	btn.ZIndex = 20
+	btn.Parent = Sidebar
+	
+	btn.MouseButton1Click:Connect(function()
+		currentTab = name
+		for _,frame in pairs(MainFrame:GetChildren()) do
+			if frame:IsA("Frame") and frame.Name == "TabFrame" then
+				frame.Visible = (frame.Tag.Value == name)
+			end
+		end
+	end)
 end
 
--- // 2. ROOT SETUP // --
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "StrongerHub_Final"
-ScreenGui.DisplayOrder = 100 
-ScreenGui.IgnoreGuiInset = true -- Prevents Roblox top bar from shifting it
+createTabButton("Search", 0)
+createTabButton("Manage", 50)
+createTabButton("Files", 100)
 
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "Main"
-MainFrame.Size = UDim2.new(0, 450, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.ZIndex = 1 -- Background is lowest
-MainFrame.BorderSizePixel = 0
-
-local Corner = Instance.new("UICorner", MainFrame)
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(138, 43, 226)
-Stroke.Thickness = 2
-
--- // 3. RAYFIELD TOGGLE (FIXED VISIBILITY) // --
-local Toggle = Instance.new("TextButton", ScreenGui)
-Toggle.Size = UDim2.new(0, 50, 0, 50)
-Toggle.Position = UDim2.new(0, 20, 0, 20)
-Toggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Toggle.Text = "S"
-Toggle.TextColor3 = Color3.fromRGB(138, 43, 226)
-Toggle.TextSize = 20
-Toggle.ZIndex = 1000 -- Highest layer
-Toggle.Draggable = true
-Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
-local TStroke = Instance.new("UIStroke", Toggle)
-TStroke.Color = Color3.fromRGB(138, 43, 226)
-
-Toggle.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
--- // 4. SIDEBAR // --
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 110, 1, -10)
-Sidebar.Position = UDim2.new(0, 5, 0, 5)
-Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Sidebar.ZIndex = 5 -- Above MainFrame
-
-local SideLayout = Instance.new("UIListLayout", Sidebar)
-SideLayout.Padding = UDim.new(0, 5)
-SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- // 5. PAGE CONTAINER // --
-local Pages = Instance.new("Frame", MainFrame)
-Pages.Name = "Pages"
-Pages.Size = UDim2.new(1, -130, 1, -10)
-Pages.Position = UDim2.new(0, 120, 0, 5)
-Pages.BackgroundTransparency = 1
-Pages.ZIndex = 5
-
-local function CreatePage(name)
-    local Page = Instance.new("ScrollingFrame", Pages)
-    Page.Name = name .. "_Page"
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.Visible = false
-    Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 3
-    Page.ZIndex = 10 -- Above Sidebar/Pages frame
-    Page.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-    
-    local Layout = Instance.new("UIListLayout", Page)
-    Layout.Padding = UDim.new(0, 10)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
-    
-    local TabBtn = Instance.new("TextButton", Sidebar)
-    TabBtn.Size = UDim2.new(0.9, 0, 0, 35)
-    TabBtn.Text = name
-    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TabBtn.ZIndex = 15 -- Clickable layer
-    Instance.new("UICorner", TabBtn)
-    
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages:GetChildren()) do
-            if p:IsA("ScrollingFrame") then p.Visible = false end
-        end
-        Page.Visible = true
-    end)
-    
-    return Page
+--// TAB CREATOR
+local function createTab(name)
+	local frame = Instance.new("Frame")
+	frame.Name = "TabFrame"
+	frame.Size = UDim2.new(1,-80,1,0)
+	frame.Position = UDim2.new(0,80,0,0)
+	frame.BackgroundTransparency = 1
+	frame.ZIndex = 10
+	frame.Visible = (name == "Search")
+	frame.Parent = MainFrame
+	
+	local tag = Instance.new("StringValue")
+	tag.Name = "Tag"
+	tag.Value = name
+	tag.Parent = frame
+	
+	return frame
 end
 
--- // INITIALIZE PAGES // --
-local SearchPage = CreatePage("Search")
-local ManagePage = CreatePage("Manage")
-local FilesPage = CreatePage("Files")
+--// SEARCH TAB
+local SearchTab = createTab("Search")
 
-SearchPage.Visible = true -- Force default
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.new(1,-20,0,40)
+searchBox.Position = UDim2.new(0,10,0,10)
+searchBox.PlaceholderText = "Enter file name..."
+searchBox.BackgroundColor3 = BG
+searchBox.TextColor3 = ACCENT
+searchBox.ZIndex = 20
+searchBox.Parent = SearchTab
 
--- // 6. ELEMENTS (FIXED ZINDEX) // --
-
--- Search Input
-local SearchBox = Instance.new("TextBox", SearchPage)
-SearchBox.Size = UDim2.new(1, -10, 0, 40)
-SearchBox.PlaceholderText = "Search & Run File..."
-SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.ZIndex = 20 -- Elements must be higher than ScrollingFrame
-Instance.new("UICorner", SearchBox)
-
-SearchBox.FocusLost:Connect(function()
-    if isfile(folderPath .. SearchBox.Text) then
-        loadstring(readfile(folderPath .. SearchBox.Text))()
-    end
+searchBox.FocusLost:Connect(function(enter)
+	if enter then
+		local path = "My_Script_Hub/"..searchBox.Text..".lua"
+		if isfile(path) then
+			loadstring(readfile(path))()
+		end
+	end
 end)
 
--- Manage Inputs
-local NameBox = Instance.new("TextBox", ManagePage)
-NameBox.Size = UDim2.new(1, -10, 0, 35)
-NameBox.PlaceholderText = "New FileName.lua"
-NameBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-NameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameBox.ZIndex = 20
-Instance.new("UICorner", NameBox)
+--// MANAGE TAB
+local ManageTab = createTab("Manage")
 
-local CodeBox = Instance.new("TextBox", ManagePage)
-CodeBox.Size = UDim2.new(1, -10, 0, 80)
-CodeBox.PlaceholderText = "Paste Code Here..."
-CodeBox.MultiLine = true
-CodeBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-CodeBox.ZIndex = 20
-Instance.new("UICorner", CodeBox)
+local deleteBox = Instance.new("TextBox")
+deleteBox.Size = UDim2.new(1,-20,0,40)
+deleteBox.Position = UDim2.new(0,10,0,10)
+deleteBox.PlaceholderText = "File to delete..."
+deleteBox.BackgroundColor3 = BG
+deleteBox.TextColor3 = ACCENT
+deleteBox.ZIndex = 20
+deleteBox.Parent = ManageTab
 
-local Save = Instance.new("TextButton", ManagePage)
-Save.Size = UDim2.new(1, -10, 0, 35)
-Save.Text = "SAVE FILE"
-Save.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Save.ZIndex = 20
-Instance.new("UICorner", Save)
+local deleteBtn = Instance.new("TextButton")
+deleteBtn.Size = UDim2.new(1,-20,0,40)
+deleteBtn.Position = UDim2.new(0,10,0,60)
+deleteBtn.Text = "Delete"
+deleteBtn.BackgroundColor3 = BG
+deleteBtn.TextColor3 = ACCENT
+deleteBtn.ZIndex = 20
+deleteBtn.Parent = ManageTab
 
-Save.MouseButton1Click:Connect(function()
-    if NameBox.Text ~= "" then
-        writefile(folderPath .. NameBox.Text, CodeBox.Text)
-    end
+--// CONFIRMATION PROMPT
+local ConfirmFrame = Instance.new("Frame")
+ConfirmFrame.Size = UDim2.new(0,250,0,120)
+ConfirmFrame.Position = UDim2.new(0.5,-125,0.5,-60)
+ConfirmFrame.BackgroundColor3 = BG
+ConfirmFrame.Visible = false
+ConfirmFrame.ZIndex = 50
+ConfirmFrame.Parent = ScreenGui
+
+local confirmText = Instance.new("TextLabel")
+confirmText.Size = UDim2.new(1,0,0,60)
+confirmText.Text = "Are you sure?"
+confirmText.TextColor3 = ACCENT
+confirmText.BackgroundTransparency = 1
+confirmText.ZIndex = 50
+confirmText.Parent = ConfirmFrame
+
+local yesBtn = Instance.new("TextButton")
+yesBtn.Size = UDim2.new(0.5,0,0,40)
+yesBtn.Position = UDim2.new(0,0,1,-40)
+yesBtn.Text = "Yes"
+yesBtn.BackgroundColor3 = BG
+yesBtn.TextColor3 = ACCENT
+yesBtn.ZIndex = 50
+yesBtn.Parent = ConfirmFrame
+
+local noBtn = Instance.new("TextButton")
+noBtn.Size = UDim2.new(0.5,0,0,40)
+noBtn.Position = UDim2.new(0.5,0,1,-40)
+noBtn.Text = "No"
+noBtn.BackgroundColor3 = BG
+noBtn.TextColor3 = ACCENT
+noBtn.ZIndex = 50
+noBtn.Parent = ConfirmFrame
+
+local fileToDelete = nil
+
+deleteBtn.MouseButton1Click:Connect(function()
+	fileToDelete = "My_Script_Hub/"..deleteBox.Text..".lua"
+	if isfile(fileToDelete) then
+		ConfirmFrame.Visible = true
+	end
 end)
 
--- Files List
+yesBtn.MouseButton1Click:Connect(function()
+	if fileToDelete then
+		delfile(fileToDelete)
+	end
+	ConfirmFrame.Visible = false
+end)
+
+noBtn.MouseButton1Click:Connect(function()
+	ConfirmFrame.Visible = false
+end)
+
+--// FILES TAB
+local FilesTab = createTab("Files")
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1,0,1,0)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.BackgroundTransparency = 1
+scroll.ZIndex = 10
+scroll.Parent = FilesTab
+
+local layout = Instance.new("UIListLayout")
+layout.Parent = scroll
+
 local function UpdateFiles()
-    for _, old in pairs(FilesPage:GetChildren()) do
-        if old:IsA("TextButton") and old.Name ~= "RefreshBtn" then old:Destroy() end
-    end
-    
-    for _, file in pairs(listfiles(folderPath)) do
-        local name = file:gsub(folderPath, "")
-        local B = Instance.new("TextButton", FilesPage)
-        B.Size = UDim2.new(1, -10, 0, 35)
-        B.Text = " ▶️  " .. name
-        B.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        B.TextColor3 = Color3.fromRGB(200, 200, 200)
-        B.TextXAlignment = Enum.TextXAlignment.Left
-        B.ZIndex = 25
-        Instance.new("UICorner", B)
-        
-        B.MouseButton1Click:Connect(function()
-            loadstring(readfile(file))()
-        end)
-    end
+	for _,btn in pairs(existingButtons) do
+		btn:Destroy()
+	end
+	existingButtons = {}
+	
+	if isfolder("My_Script_Hub") then
+		for _,file in pairs(listfiles("My_Script_Hub/")) do
+			local name = file:match("([^/]+)%.lua$")
+			if name then
+				local btn = Instance.new("TextButton")
+				btn.Size = UDim2.new(1,0,0,40)
+				btn.Text = name
+				btn.BackgroundColor3 = BG
+				btn.TextColor3 = ACCENT
+				btn.ZIndex = 20
+				btn.Parent = scroll
+				
+				btn.MouseButton1Click:Connect(function()
+					loadstring(readfile(file))()
+				end)
+				
+				table.insert(existingButtons, btn)
+			end
+		end
+	end
 end
-
-local Refresh = Instance.new("TextButton", FilesPage)
-Refresh.Name = "RefreshBtn"
-Refresh.Size = UDim2.new(1, -10, 0, 30)
-Refresh.Text = "REFRESH LIST"
-Refresh.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Refresh.ZIndex = 25
-Instance.new("UICorner", Refresh)
-Refresh.MouseButton1Click:Connect(UpdateFiles)
-
--- // 7. DRAG LOGIC // --
-MainFrame.Active = true
-MainFrame.Draggable = true
 
 UpdateFiles()
+
+--// FLOATING TOGGLE BUTTON
+local Toggle = Instance.new("TextButton")
+Toggle.Size = UDim2.new(0,50,0,50)
+Toggle.Position = UDim2.new(0,10,0.5,-25)
+Toggle.Text = "S"
+Toggle.BackgroundColor3 = ACCENT
+Toggle.TextColor3 = Color3.new(1,1,1)
+Toggle.ZIndex = 1000
+Toggle.Parent = ScreenGui
+
+Toggle.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
