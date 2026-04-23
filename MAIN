@@ -1,581 +1,536 @@
---// CYBER-EXECUTIVE HUB //--
---// High-UX mobile executor hub with per-script actions //--
+--// CYBER-EXECUTIVE HUB v4
+--// Custom UI, mobile friendly, per-file Run/Delete, search-only filtering, proper scroll
 
---////////////////////////////////////////////////////
--- SERVICES / ROOT
---////////////////////////////////////////////////////
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
 local function getRoot()
-    if typeof(gethui) == "function" then
-        local ok, hui = pcall(gethui)
-        if ok and hui then
-            return hui
-        end
-    end
-    return CoreGui
+	if typeof(gethui) == "function" then
+		local ok, hui = pcall(gethui)
+		if ok and hui then
+			return hui
+		end
+	end
+	return CoreGui
 end
 
 local Root = getRoot()
 
---////////////////////////////////////////////////////
--- CONFIG
---////////////////////////////////////////////////////
-local HUB_NAME = "CyberExec_Pro"
+local HUB_NAME = "CyberExec_UX4"
 local folderPath = "My_Script_Hub/"
+
 if not isfolder(folderPath) then
-    makefolder(folderPath)
+	makefolder(folderPath)
 end
 
+--==================================================
+-- THEME
+--==================================================
 local C = {
-    BG = Color3.fromRGB(10, 10, 10),
-    PANEL = Color3.fromRGB(15, 15, 15),
-    SURFACE = Color3.fromRGB(22, 22, 22),
-    SURFACE_2 = Color3.fromRGB(30, 30, 30),
-    ACCENT = Color3.fromRGB(138, 43, 226),
-    TEXT = Color3.fromRGB(235, 235, 235),
-    MUTED = Color3.fromRGB(170, 170, 170),
-    DANGER = Color3.fromRGB(220, 70, 70),
-    SUCCESS = Color3.fromRGB(80, 200, 130),
+	BG = Color3.fromRGB(10, 10, 10),
+	PANEL = Color3.fromRGB(15, 15, 15),
+	SURFACE = Color3.fromRGB(22, 22, 22),
+	SURFACE2 = Color3.fromRGB(30, 30, 30),
+	ACCENT = Color3.fromRGB(138, 43, 226),
+	TEXT = Color3.fromRGB(240, 240, 240),
+	MUTED = Color3.fromRGB(165, 165, 165),
+	DANGER = Color3.fromRGB(220, 70, 70),
+	SUCCESS = Color3.fromRGB(75, 200, 120),
 }
 
-local function safeCall(fn, ...)
-    local ok, res = pcall(fn, ...)
-    if not ok then
-        warn("[CyberExec] " .. tostring(res))
-    end
-    return ok, res
-end
-
-local function trim(s)
-    s = tostring(s or "")
-    return (s:gsub("^%s+", ""):gsub("%s+$", ""))
-end
-
-local function normalizeName(name)
-    name = trim(name)
-    if name == "" then return "" end
-    return name
-end
-
-local function ensureLuaName(name)
-    name = normalizeName(name)
-    if name == "" then return "" end
-    if not name:lower():match("%.lua$") then
-        name = name .. ".lua"
-    end
-    return name
-end
-
-local function relName(path)
-    return path:gsub("^" .. folderPath:gsub("(%p)", "%%%1"), "")
-end
-
-local function getDisplaySize(bytes)
-    bytes = tonumber(bytes) or 0
-    if bytes < 1024 then
-        return tostring(bytes) .. " B"
-    elseif bytes < 1024 * 1024 then
-        return string.format("%.1f KB", bytes / 1024)
-    else
-        return string.format("%.2f MB", bytes / (1024 * 1024))
-    end
-end
-
-local function getFileSize(path)
-    local ok, content = pcall(readfile, path)
-    if ok and type(content) == "string" then
-        return #content
-    end
-    return 0
-end
-
-local function execFile(path)
-    if not isfile(path) then
-        return false, "File not found"
-    end
-    local ok, err = pcall(function()
-        local src = readfile(path)
-        loadstring(src)()
-    end)
-    if not ok then
-        return false, err
-    end
-    return true
-end
-
-local function findExactFileByName(input)
-    input = normalizeName(input)
-    if input == "" then return nil end
-
-    local directCandidates = {
-        folderPath .. input,
-        folderPath .. ensureLuaName(input),
-        input,
-        ensureLuaName(input),
-    }
-
-    for _, p in ipairs(directCandidates) do
-        if isfile(p) then
-            return p
-        end
-    end
-
-    local target = input:lower()
-    local files = listfiles(folderPath)
-    for _, p in ipairs(files) do
-        local name = relName(p)
-        if name:lower() == target or name:lower() == ensureLuaName(target):lower() then
-            return p
-        end
-    end
-
-    return nil
-end
-
---////////////////////////////////////////////////////
+--==================================================
 -- CLEANUP
---////////////////////////////////////////////////////
+--==================================================
 for _, old in ipairs(Root:GetChildren()) do
-    if old.Name == HUB_NAME then
-        old:Destroy()
-    end
+	if old.Name == HUB_NAME then
+		old:Destroy()
+	end
 end
 
---////////////////////////////////////////////////////
--- GUI ROOT
---////////////////////////////////////////////////////
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = HUB_NAME
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 1000
-ScreenGui.Parent = Root
-
---////////////////////////////////////////////////////
+--==================================================
 -- HELPERS
---////////////////////////////////////////////////////
+--==================================================
 local function make(className, props, parent)
-    local obj = Instance.new(className)
-    if props then
-        for k, v in pairs(props) do
-            obj[k] = v
-        end
-    end
-    obj.Parent = parent
-    return obj
+	local obj = Instance.new(className)
+	if props then
+		for k, v in pairs(props) do
+			obj[k] = v
+		end
+	end
+	obj.Parent = parent
+	return obj
 end
 
 local function corner(parent, radius)
-    return make("UICorner", { CornerRadius = UDim.new(0, radius or 8) }, parent)
+	return make("UICorner", { CornerRadius = UDim.new(0, radius or 8) }, parent)
 end
 
 local function stroke(parent, color, thickness, transparency)
-    return make("UIStroke", {
-        Color = color or C.ACCENT,
-        Thickness = thickness or 1.5,
-        Transparency = transparency or 0
-    }, parent)
+	return make("UIStroke", {
+		Color = color or C.ACCENT,
+		Thickness = thickness or 1.5,
+		Transparency = transparency or 0
+	}, parent)
 end
 
-local function pad(parent, left, right, top, bottom)
-    return make("UIPadding", {
-        PaddingLeft = UDim.new(0, left or 0),
-        PaddingRight = UDim.new(0, right or 0),
-        PaddingTop = UDim.new(0, top or 0),
-        PaddingBottom = UDim.new(0, bottom or 0),
-    }, parent)
+local function pad(parent, l, r, t, b)
+	return make("UIPadding", {
+		PaddingLeft = UDim.new(0, l or 0),
+		PaddingRight = UDim.new(0, r or 0),
+		PaddingTop = UDim.new(0, t or 0),
+		PaddingBottom = UDim.new(0, b or 0),
+	}, parent)
 end
 
 local function label(parent, text, size, color, bold)
-    return make("TextLabel", {
-        BackgroundTransparency = 1,
-        Text = text or "",
-        TextColor3 = color or C.TEXT,
-        TextSize = size or 14,
-        Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        RichText = false,
-        ClipsDescendants = true,
-    }, parent)
+	return make("TextLabel", {
+		BackgroundTransparency = 1,
+		Text = text or "",
+		TextColor3 = color or C.TEXT,
+		TextSize = size or 14,
+		Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextWrapped = false,
+		ClipsDescendants = true,
+	}, parent)
 end
 
 local function button(parent, text, bg, fg, size)
-    local b = make("TextButton", {
-        Text = text or "",
-        BackgroundColor3 = bg or C.SURFACE,
-        TextColor3 = fg or C.TEXT,
-        TextSize = size or 14,
-        Font = Enum.Font.GothamSemibold,
-        AutoButtonColor = true,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-    }, parent)
-    corner(b, 8)
-    stroke(b, C.ACCENT, 1, 0.8)
-    return b
+	local b = make("TextButton", {
+		Text = text or "",
+		BackgroundColor3 = bg or C.SURFACE,
+		TextColor3 = fg or C.TEXT,
+		TextSize = size or 14,
+		Font = Enum.Font.GothamSemibold,
+		AutoButtonColor = true,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+	}, parent)
+	corner(b, 8)
+	stroke(b, C.ACCENT, 1, 0.85)
+	return b
 end
 
 local function input(parent, placeholder, multiline, height)
-    local t = make("TextBox", {
-        Text = "",
-        PlaceholderText = placeholder or "",
-        ClearTextOnFocus = false,
-        MultiLine = multiline or false,
-        BackgroundColor3 = C.SURFACE_2,
-        TextColor3 = C.TEXT,
-        PlaceholderColor3 = C.MUTED,
-        TextSize = 14,
-        Font = Enum.Font.Gotham,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Top,
-    }, parent)
-    corner(t, 8)
-    stroke(t, C.ACCENT, 1, 0.85)
-    if height then
-        t.Size = UDim2.new(1, -12, 0, height)
-    end
-    pad(t, 10, 10, 8, 8)
-    return t
+	local t = make("TextBox", {
+		Text = "",
+		PlaceholderText = placeholder or "",
+		ClearTextOnFocus = false,
+		MultiLine = multiline or false,
+		BackgroundColor3 = C.SURFACE2,
+		TextColor3 = C.TEXT,
+		PlaceholderColor3 = C.MUTED,
+		TextSize = 14,
+		Font = Enum.Font.Gotham,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = multiline and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center,
+	}, parent)
+	corner(t, 8)
+	stroke(t, C.ACCENT, 1, 0.88)
+	pad(t, 10, 10, 8, 8)
+	if height then
+		t.Size = UDim2.new(1, 0, 0, height)
+	end
+	return t
 end
 
-local function clearFrameChildren(frame, exceptNames)
-    local keep = {}
-    if exceptNames then
-        for _, n in ipairs(exceptNames) do keep[n] = true end
-    end
-    for _, child in ipairs(frame:GetChildren()) do
-        if not keep[child.Name] and not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
-            child:Destroy()
-        end
-    end
+local function relName(path)
+	if typeof(path) ~= "string" then
+		return ""
+	end
+	if path:sub(1, #folderPath) == folderPath then
+		return path:sub(#folderPath + 1)
+	end
+	return path
 end
 
---////////////////////////////////////////////////////
+local function ensureLuaName(name)
+	name = tostring(name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	if name == "" then
+		return ""
+	end
+	if not name:lower():match("%.lua$") then
+		name = name .. ".lua"
+	end
+	return name
+end
+
+local function safeExec(path)
+	if not isfile(path) then
+		return false, "File not found"
+	end
+	local ok, err = pcall(function()
+		loadstring(readfile(path))()
+	end)
+	if not ok then
+		return false, err
+	end
+	return true
+end
+
+local function fileBytes(path)
+	local ok, data = pcall(readfile, path)
+	if ok and type(data) == "string" then
+		return #data
+	end
+	return 0
+end
+
+local function fmtBytes(n)
+	n = tonumber(n) or 0
+	if n < 1024 then
+		return tostring(n) .. " B"
+	elseif n < 1024 * 1024 then
+		return string.format("%.1f KB", n / 1024)
+	else
+		return string.format("%.2f MB", n / (1024 * 1024))
+	end
+end
+
+local function clearFrame(frame)
+	for _, child in ipairs(frame:GetChildren()) do
+		if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and not child:IsA("UIStroke") and not child:IsA("UICorner") then
+			child:Destroy()
+		end
+	end
+end
+
+local function findExactFile(query)
+	query = tostring(query or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	if query == "" then
+		return nil
+	end
+
+	local candidates = {
+		folderPath .. query,
+		folderPath .. ensureLuaName(query),
+		query,
+		ensureLuaName(query),
+	}
+
+	for _, p in ipairs(candidates) do
+		if isfile(p) then
+			return p
+		end
+	end
+
+	local q = query:lower()
+	for _, p in ipairs(listfiles(folderPath)) do
+		local name = relName(p):lower()
+		if name == q or name == ensureLuaName(q):lower() then
+			return p
+		end
+	end
+
+	return nil
+end
+
+--==================================================
+-- GUI ROOT
+--==================================================
+local ScreenGui = make("ScreenGui", {
+	Name = HUB_NAME,
+	ResetOnSpawn = false,
+	IgnoreGuiInset = true,
+	DisplayOrder = 1000,
+}, Root)
+
+--==================================================
 -- TOAST
---////////////////////////////////////////////////////
-local ToastHolder = make("Frame", {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(0, 340, 0, 80),
-    Position = UDim2.new(1, -355, 1, -95),
-    ZIndex = 900
-}, ScreenGui)
-
+--==================================================
 local Toast = make("Frame", {
-    BackgroundColor3 = C.PANEL,
-    Size = UDim2.new(1, 0, 1, 0),
-    Visible = false,
-    ZIndex = 900
-}, ToastHolder)
+	BackgroundColor3 = C.PANEL,
+	Size = UDim2.new(0, 320, 0, 72),
+	Position = UDim2.new(1, -340, 1, -88),
+	Visible = false,
+	BorderSizePixel = 0,
+	ZIndex = 900,
+}, ScreenGui)
 corner(Toast, 10)
-stroke(Toast, C.ACCENT, 1.5, 0.2)
+stroke(Toast, C.ACCENT, 1.5, 0.25)
 
-local ToastTitle = label(Toast, "Status", 14, C.ACCENT, true)
+local ToastTitle = label(Toast, "Ready", 14, C.ACCENT, true)
 ToastTitle.Position = UDim2.new(0, 12, 0, 8)
 ToastTitle.Size = UDim2.new(1, -24, 0, 18)
 ToastTitle.ZIndex = 901
 
 local ToastBody = label(Toast, "", 13, C.TEXT, false)
 ToastBody.Position = UDim2.new(0, 12, 0, 28)
-ToastBody.Size = UDim2.new(1, -24, 1, -36)
+ToastBody.Size = UDim2.new(1, -24, 0, 34)
 ToastBody.TextWrapped = true
 ToastBody.ZIndex = 901
 
-local function showToast(title, body, tint)
-    ToastTitle.Text = title or "Status"
-    ToastTitle.TextColor3 = tint or C.ACCENT
-    ToastBody.Text = body or ""
-    Toast.Visible = true
-    task.delay(2.25, function()
-        if Toast then
-            Toast.Visible = false
-        end
-    end)
+local function toast(title, message, tint)
+	ToastTitle.Text = title or "Status"
+	ToastTitle.TextColor3 = tint or C.ACCENT
+	ToastBody.Text = message or ""
+	Toast.Visible = true
+	task.delay(2.2, function()
+		if Toast then
+			Toast.Visible = false
+		end
+	end)
 end
 
---////////////////////////////////////////////////////
+--==================================================
 -- MAIN WINDOW
---////////////////////////////////////////////////////
+--==================================================
 local Main = make("Frame", {
-    Name = "Main",
-    BackgroundColor3 = C.BG,
-    Size = UDim2.new(0, 560, 0, 360),
-    Position = UDim2.new(0.5, -280, 0.5, -180),
-    BorderSizePixel = 0,
-    ZIndex = 1,
-    ClipsDescendants = true,
-    Active = true,
-    Visible = true
+	Name = "Main",
+	Size = UDim2.new(0, 600, 0, 380),
+	Position = UDim2.new(0.5, -300, 0.5, -190),
+	BackgroundColor3 = C.BG,
+	BorderSizePixel = 0,
+	ZIndex = 1,
+	Active = true,
+	Visible = true,
+	ClipsDescendants = true,
 }, ScreenGui)
 corner(Main, 10)
 stroke(Main, C.ACCENT, 2, 0)
 
 local Header = make("Frame", {
-    BackgroundColor3 = C.PANEL,
-    Size = UDim2.new(1, 0, 0, 40),
-    ZIndex = 4,
-    BorderSizePixel = 0
+	Size = UDim2.new(1, 0, 0, 42),
+	BackgroundColor3 = C.PANEL,
+	BorderSizePixel = 0,
+	ZIndex = 4,
 }, Main)
 corner(Header, 10)
 
-local HeaderMask = make("Frame", {
-    BackgroundColor3 = C.PANEL,
-    BorderSizePixel = 0,
-    Position = UDim2.new(0, 0, 0, 20),
-    Size = UDim2.new(1, 0, 0, 20),
-    ZIndex = 4
+local HeaderCover = make("Frame", {
+	Size = UDim2.new(1, 0, 0, 18),
+	Position = UDim2.new(0, 0, 1, -18),
+	BackgroundColor3 = C.PANEL,
+	BorderSizePixel = 0,
+	ZIndex = 4,
 }, Header)
 
 local Title = label(Header, "Cyber-Executive Hub", 15, C.TEXT, true)
 Title.Position = UDim2.new(0, 14, 0, 0)
-Title.Size = UDim2.new(1, -150, 1, 0)
+Title.Size = UDim2.new(1, -150, 0, 20)
 Title.ZIndex = 6
 
-local Subtitle = label(Header, "mobile-optimized script manager", 12, C.MUTED, false)
+local Subtitle = label(Header, "search-only filter • per-script actions • mobile optimized", 12, C.MUTED, false)
 Subtitle.Position = UDim2.new(0, 14, 0, 18)
 Subtitle.Size = UDim2.new(1, -150, 0, 16)
 Subtitle.ZIndex = 6
 
 local CloseBtn = button(Header, "×", C.DANGER, Color3.new(1,1,1), 18)
 CloseBtn.Size = UDim2.new(0, 34, 0, 28)
-CloseBtn.Position = UDim2.new(1, -42, 0, 6)
+CloseBtn.Position = UDim2.new(1, -40, 0, 7)
 CloseBtn.ZIndex = 20
 CloseBtn.MouseButton1Click:Connect(function()
-    Main.Visible = false
+	Main.Visible = false
 end)
 
-local RefreshBtn = button(Header, "↻", C.SURFACE_2, C.TEXT, 16)
-RefreshBtn.Size = UDim2.new(0, 34, 0, 28)
-RefreshBtn.Position = UDim2.new(1, -82, 0, 6)
-RefreshBtn.ZIndex = 20
+local RefreshHeaderBtn = button(Header, "↻", C.SURFACE2, C.TEXT, 16)
+RefreshHeaderBtn.Size = UDim2.new(0, 34, 0, 28)
+RefreshHeaderBtn.Position = UDim2.new(1, -80, 0, 7)
+RefreshHeaderBtn.ZIndex = 20
 
---////////////////////////////////////////////////////
--- DRAG LOGIC
---////////////////////////////////////////////////////
+-- Header drag
 do
-    local dragging = false
-    local dragStart
-    local startPos
+	local dragging = false
+	local dragStart
+	local startPos
 
-    Header.InputBegan:Connect(function(inputObj)
-        if inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = inputObj.Position
-            startPos = Main.Position
-        end
-    end)
+	Header.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = inp.Position
+			startPos = Main.Position
+		end
+	end)
 
-    UIS.InputChanged:Connect(function(inputObj)
-        if dragging and (inputObj.UserInputType == Enum.UserInputType.MouseMovement or inputObj.UserInputType == Enum.UserInputType.Touch) then
-            local delta = inputObj.Position - dragStart
-            Main.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
+	UIS.InputChanged:Connect(function(inp)
+		if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			local delta = inp.Position - dragStart
+			Main.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
 
-    UIS.InputEnded:Connect(function(inputObj)
-        if inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
+	UIS.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
 end
 
---////////////////////////////////////////////////////
+--==================================================
 -- TOGGLE BUTTON
---////////////////////////////////////////////////////
+--==================================================
 local Toggle = button(ScreenGui, "S", C.PANEL, C.ACCENT, 20)
 Toggle.Name = "HubToggle"
 Toggle.Size = UDim2.new(0, 48, 0, 48)
 Toggle.Position = UDim2.new(0, 18, 0, 18)
 Toggle.ZIndex = 1000
 corner(Toggle, 999)
-Toggle.Active = true
+stroke(Toggle, C.ACCENT, 1.5, 0.15)
 
 do
-    local dragging = false
-    local dragStart
-    local startPos
+	local dragging = false
+	local dragStart
+	local startPos
 
-    Toggle.InputBegan:Connect(function(inputObj)
-        if inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = inputObj.Position
-            startPos = Toggle.Position
-        end
-    end)
+	Toggle.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = inp.Position
+			startPos = Toggle.Position
+		end
+	end)
 
-    UIS.InputChanged:Connect(function(inputObj)
-        if dragging and (inputObj.UserInputType == Enum.UserInputType.MouseMovement or inputObj.UserInputType == Enum.UserInputType.Touch) then
-            local delta = inputObj.Position - dragStart
-            Toggle.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
+	UIS.InputChanged:Connect(function(inp)
+		if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			local delta = inp.Position - dragStart
+			Toggle.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
 
-    UIS.InputEnded:Connect(function(inputObj)
-        if inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
+	UIS.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
 end
 
 Toggle.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
+	Main.Visible = not Main.Visible
 end)
 
---////////////////////////////////////////////////////
--- LAYOUT
---////////////////////////////////////////////////////
+--==================================================
+-- BODY LAYOUT
+--==================================================
 local Sidebar = make("Frame", {
-    Name = "Sidebar",
-    BackgroundColor3 = C.PANEL,
-    Size = UDim2.new(0, 126, 1, -52),
-    Position = UDim2.new(0, 8, 0, 44),
-    BorderSizePixel = 0,
-    ZIndex = 5
+	Size = UDim2.new(0, 126, 1, -54),
+	Position = UDim2.new(0, 8, 0, 46),
+	BackgroundColor3 = C.PANEL,
+	BorderSizePixel = 0,
+	ZIndex = 5,
 }, Main)
 corner(Sidebar, 10)
-stroke(Sidebar, C.ACCENT, 1.5, 0.8)
+stroke(Sidebar, C.ACCENT, 1.5, 0.85)
 pad(Sidebar, 8, 8, 8, 8)
 
 local SideLayout = make("UIListLayout", {
-    Padding = UDim.new(0, 6),
-    SortOrder = Enum.SortOrder.LayoutOrder,
-    HorizontalAlignment = Enum.HorizontalAlignment.Center
+	Padding = UDim.new(0, 6),
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
 }, Sidebar)
 
 local PageArea = make("Frame", {
-    Name = "Pages",
-    BackgroundTransparency = 1,
-    Size = UDim2.new(1, -144, 1, -52),
-    Position = UDim2.new(0, 136, 0, 44),
-    ZIndex = 5
+	Size = UDim2.new(1, -144, 1, -54),
+	Position = UDim2.new(0, 136, 0, 46),
+	BackgroundTransparency = 1,
+	ZIndex = 5,
 }, Main)
 
-local PageTitleBar = make("Frame", {
-    BackgroundColor3 = C.PANEL,
-    Size = UDim2.new(1, 0, 0, 34),
-    ZIndex = 6,
-    BorderSizePixel = 0
+local PageBar = make("Frame", {
+	Size = UDim2.new(1, 0, 0, 34),
+	BackgroundColor3 = C.PANEL,
+	BorderSizePixel = 0,
+	ZIndex = 6,
 }, PageArea)
-corner(PageTitleBar, 10)
+corner(PageBar, 10)
 
-local ActivePageLabel = label(PageTitleBar, "Search", 14, C.TEXT, true)
+local ActivePageLabel = label(PageBar, "Search", 14, C.TEXT, true)
 ActivePageLabel.Position = UDim2.new(0, 12, 0, 0)
-ActivePageLabel.Size = UDim2.new(1, -140, 1, 0)
+ActivePageLabel.Size = UDim2.new(1, -120, 1, 0)
 ActivePageLabel.ZIndex = 7
 
-local StatsLabel = label(PageTitleBar, "0 files", 12, C.MUTED, false)
-StatsLabel.Position = UDim2.new(1, -120, 0, 0)
-StatsLabel.Size = UDim2.new(0, 108, 1, 0)
-StatsLabel.TextXAlignment = Enum.TextXAlignment.Right
-StatsLabel.ZIndex = 7
+local CountLabel = label(PageBar, "0 files", 12, C.MUTED, false)
+CountLabel.Position = UDim2.new(1, -110, 0, 0)
+CountLabel.Size = UDim2.new(0, 100, 1, 0)
+CountLabel.TextXAlignment = Enum.TextXAlignment.Right
+CountLabel.ZIndex = 7
 
 local Pages = make("Frame", {
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 0, 0, 40),
-    Size = UDim2.new(1, 0, 1, -40),
-    ZIndex = 5
+	Size = UDim2.new(1, 0, 1, -40),
+	Position = UDim2.new(0, 0, 0, 40),
+	BackgroundTransparency = 1,
+	ZIndex = 5,
 }, PageArea)
 
 local function makePage(name)
-    local page = make("ScrollingFrame", {
-        Name = name .. "Page",
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 1, 0),
-        ScrollBarThickness = 3,
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        Visible = false,
-        ZIndex = 10
-    }, Pages)
-    pad(page, 4, 6, 4, 4)
-
-    local pageLayout = make("UIListLayout", {
-        Padding = UDim.new(0, 8),
-        SortOrder = Enum.SortOrder.LayoutOrder
-    }, page)
-
-    return page
+	local page = make("ScrollingFrame", {
+		Name = name .. "Page",
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 4,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		Visible = false,
+		ZIndex = 10,
+	}, Pages)
+	pad(page, 4, 4, 4, 4)
+	make("UIListLayout", {
+		Padding = UDim.new(0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, page)
+	return page
 end
 
 local SearchPage = makePage("Search")
 local FilesPage = makePage("Files")
 local ManagePage = makePage("Manage")
 
-local currentPage = nil
 local function switchPage(page, name)
-    for _, child in ipairs(Pages:GetChildren()) do
-        if child:IsA("ScrollingFrame") then
-            child.Visible = false
-        end
-    end
-    page.Visible = true
-    currentPage = name
-    ActivePageLabel.Text = name
+	for _, child in ipairs(Pages:GetChildren()) do
+		if child:IsA("ScrollingFrame") then
+			child.Visible = false
+		end
+	end
+	page.Visible = true
+	ActivePageLabel.Text = name
 end
 
---////////////////////////////////////////////////////
--- NAV BUTTONS
---////////////////////////////////////////////////////
-local function navButton(text)
-    local b = button(Sidebar, text, C.SURFACE, C.TEXT, 14)
-    b.Size = UDim2.new(1, 0, 0, 34)
-    b.ZIndex = 20
-    return b
+local function navBtn(text)
+	local b = button(Sidebar, text, C.SURFACE, C.TEXT, 14)
+	b.Size = UDim2.new(1, 0, 0, 34)
+	b.ZIndex = 20
+	return b
 end
 
-local SearchNav = navButton("Search")
-local FilesNav = navButton("Files")
-local ManageNav = navButton("Manage")
+local SearchNav = navBtn("Search")
+local FilesNav = navBtn("Files")
+local ManageNav = navBtn("Manage")
 
-SearchNav.MouseButton1Click:Connect(function()
-    switchPage(SearchPage, "Search")
-end)
-
-FilesNav.MouseButton1Click:Connect(function()
-    switchPage(FilesPage, "Files")
-end)
-
-ManageNav.MouseButton1Click:Connect(function()
-    switchPage(ManagePage, "Manage")
-end)
-
---////////////////////////////////////////////////////
--- CONFIRMATION PROMPT
---////////////////////////////////////////////////////
-local PromptShade = make("TextButton", {
-    Name = "PromptShade",
-    BackgroundColor3 = Color3.new(0, 0, 0),
-    BackgroundTransparency = 0.45,
-    Text = "",
-    AutoButtonColor = false,
-    Visible = false,
-    Size = UDim2.new(1, 0, 1, 0),
-    ZIndex = 800
+--==================================================
+-- CONFIRM PROMPT
+--==================================================
+local Shade = make("TextButton", {
+	Name = "Shade",
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BackgroundTransparency = 0.45,
+	Size = UDim2.new(1, 0, 1, 0),
+	Visible = false,
+	Text = "",
+	AutoButtonColor = false,
+	ZIndex = 800,
 }, ScreenGui)
 
 local Prompt = make("Frame", {
-    Name = "DeletePrompt",
-    BackgroundColor3 = C.BG,
-    Size = UDim2.new(0, 300, 0, 140),
-    Position = UDim2.new(0.5, -150, 0.5, -70),
-    Visible = false,
-    ZIndex = 801,
-    BorderSizePixel = 0
+	Name = "DeletePrompt",
+	Size = UDim2.new(0, 300, 0, 140),
+	Position = UDim2.new(0.5, -150, 0.5, -70),
+	BackgroundColor3 = C.BG,
+	BorderSizePixel = 0,
+	Visible = false,
+	ZIndex = 801,
 }, ScreenGui)
 corner(Prompt, 12)
 stroke(Prompt, C.ACCENT, 2, 0)
@@ -587,302 +542,335 @@ PromptTitle.ZIndex = 802
 
 local PromptBody = label(Prompt, "This file will be permanently deleted.", 13, C.MUTED, false)
 PromptBody.Position = UDim2.new(0, 14, 0, 36)
-PromptBody.Size = UDim2.new(1, -28, 0, 28)
+PromptBody.Size = UDim2.new(1, -28, 0, 22)
 PromptBody.ZIndex = 802
 
-local PromptTarget = label(Prompt, "", 13, C.ACCENT, true)
-PromptTarget.Position = UDim2.new(0, 14, 0, 62)
-PromptTarget.Size = UDim2.new(1, -28, 0, 22)
-PromptTarget.ZIndex = 802
+local PromptFile = label(Prompt, "", 13, C.ACCENT, true)
+PromptFile.Position = UDim2.new(0, 14, 0, 60)
+PromptFile.Size = UDim2.new(1, -28, 0, 18)
+PromptFile.ZIndex = 802
 
-local CancelBtn = button(Prompt, "Cancel", C.SURFACE_2, C.TEXT, 14)
-CancelBtn.Size = UDim2.new(0.48, 0, 0, 34)
-CancelBtn.Position = UDim2.new(0, 14, 1, -46)
-CancelBtn.ZIndex = 803
+local CancelDelete = button(Prompt, "Cancel", C.SURFACE2, C.TEXT, 14)
+CancelDelete.Size = UDim2.new(0.48, 0, 0, 34)
+CancelDelete.Position = UDim2.new(0, 14, 1, -46)
+CancelDelete.ZIndex = 803
 
-local ConfirmBtn = button(Prompt, "Delete", C.DANGER, Color3.new(1,1,1), 14)
-ConfirmBtn.Size = UDim2.new(0.48, 0, 0, 34)
-ConfirmBtn.Position = UDim2.new(0.52, 0, 1, -46)
-ConfirmBtn.ZIndex = 803
+local ConfirmDelete = button(Prompt, "Delete", C.DANGER, Color3.new(1,1,1), 14)
+ConfirmDelete.Size = UDim2.new(0.48, 0, 0, 34)
+ConfirmDelete.Position = UDim2.new(0.52, 0, 1, -46)
+ConfirmDelete.ZIndex = 803
 
-local pendingDeletePath = nil
+local deleteTarget = nil
 
-local function openDeletePrompt(path)
-    pendingDeletePath = path
-    PromptTarget.Text = relName(path)
-    Prompt.Visible = true
-    PromptShade.Visible = true
+local function openDelete(path)
+	deleteTarget = path
+	PromptFile.Text = relName(path)
+	Prompt.Visible = true
+	Shade.Visible = true
 end
 
-local function closeDeletePrompt()
-    pendingDeletePath = nil
-    Prompt.Visible = false
-    PromptShade.Visible = false
+local function closeDelete()
+	deleteTarget = nil
+	Prompt.Visible = false
+	Shade.Visible = false
 end
 
-CancelBtn.MouseButton1Click:Connect(closeDeletePrompt)
-PromptShade.MouseButton1Click:Connect(closeDeletePrompt)
+CancelDelete.MouseButton1Click:Connect(closeDelete)
+Shade.MouseButton1Click:Connect(closeDelete)
 
-ConfirmBtn.MouseButton1Click:Connect(function()
-    if pendingDeletePath and isfile(pendingDeletePath) then
-        safeCall(delfile, pendingDeletePath)
-        showToast("Deleted", relName(pendingDeletePath) .. " removed.", C.DANGER)
-        closeDeletePrompt()
-        task.defer(function()
-            task.wait(0.05)
-            -- refresh after delete
-            local ok = pcall(function()
-                -- forward declared below
-            end)
-        end)
-    else
-        closeDeletePrompt()
-    end
+ConfirmDelete.MouseButton1Click:Connect(function()
+	if deleteTarget and isfile(deleteTarget) then
+		safeCall(delfile, deleteTarget)
+		toast("Deleted", relName(deleteTarget) .. " removed.", C.DANGER)
+	end
+	closeDelete()
+	task.defer(function()
+		-- refresh happens after declaration below
+	end)
 end)
 
---////////////////////////////////////////////////////
--- FILE CACHE / RENDERING
---////////////////////////////////////////////////////
+--==================================================
+-- FILE CACHE
+--==================================================
 local FileCache = {}
-local FilesContainer = make("Frame", {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(1, 0, 0, 0),
-    ZIndex = 10
-}, FilesPage)
 
-local FilesLayout = make("UIListLayout", {
-    Padding = UDim.new(0, 8),
-    SortOrder = Enum.SortOrder.LayoutOrder
-}, FilesContainer)
+local function refreshCache()
+	FileCache = {}
+	if isfolder(folderPath) then
+		local files = listfiles(folderPath)
+		table.sort(files, function(a, b)
+			return relName(a):lower() < relName(b):lower()
+		end)
 
-local function scanFiles()
-    FileCache = {}
-    local files = {}
-    if isfolder(folderPath) then
-        files = listfiles(folderPath)
-    end
-
-    table.sort(files, function(a, b)
-        return relName(a):lower() < relName(b):lower()
-    end)
-
-    for _, path in ipairs(files) do
-        local name = relName(path)
-        FileCache[#FileCache + 1] = {
-            path = path,
-            name = name,
-            size = getFileSize(path)
-        }
-    end
-
-    StatsLabel.Text = tostring(#FileCache) .. " files"
+		for _, path in ipairs(files) do
+			local name = relName(path)
+			FileCache[#FileCache + 1] = {
+				path = path,
+				name = name,
+				size = fileBytes(path),
+			}
+		end
+	end
+	CountLabel.Text = tostring(#FileCache) .. " files"
 end
 
-local function buildFileRow(parent, file, isResultRow)
-    local row = make("Frame", {
-        BackgroundColor3 = C.SURFACE,
-        Size = UDim2.new(1, -2, 0, 58),
-        BorderSizePixel = 0,
-        ZIndex = 10
-    }, parent)
-    corner(row, 10)
-    stroke(row, C.ACCENT, 1, 0.9)
-    pad(row, 10, 10, 8, 8)
+--==================================================
+-- ROW TEMPLATE
+--==================================================
+local function createRow(parent, file)
+	local row = make("Frame", {
+		Size = UDim2.new(1, -2, 0, 62),
+		BackgroundColor3 = C.SURFACE,
+		BorderSizePixel = 0,
+		ZIndex = 10,
+	}, parent)
+	corner(row, 10)
+	stroke(row, C.ACCENT, 1, 0.88)
+	pad(row, 10, 10, 8, 8)
 
-    local name = label(row, file.name, 14, C.TEXT, true)
-    name.Size = UDim2.new(1, -160, 0, 20)
-    name.ZIndex = 12
+	local name = label(row, file.name, 14, C.TEXT, true)
+	name.Position = UDim2.new(0, 0, 0, 0)
+	name.Size = UDim2.new(1, -150, 0, 20)
+	name.ZIndex = 12
 
-    local meta = label(row, getDisplaySize(file.size), 12, C.MUTED, false)
-    meta.Position = UDim2.new(0, 0, 0, 24)
-    meta.Size = UDim2.new(1, -160, 0, 16)
-    meta.ZIndex = 12
+	local meta = label(row, fmtBytes(file.size), 12, C.MUTED, false)
+	meta.Position = UDim2.new(0, 0, 0, 24)
+	meta.Size = UDim2.new(1, -150, 0, 16)
+	meta.ZIndex = 12
 
-    local RunBtn = button(row, "Run", C.ACCENT, Color3.new(1,1,1), 13)
-    RunBtn.Size = UDim2.new(0, 56, 0, 34)
-    RunBtn.Position = UDim2.new(1, -124, 0.5, -17)
-    RunBtn.ZIndex = 20
+	local run = button(row, "Run", C.ACCENT, Color3.new(1, 1, 1), 13)
+	run.Size = UDim2.new(0, 58, 0, 34)
+	run.Position = UDim2.new(1, -124, 0.5, -17)
+	run.ZIndex = 20
 
-    local DelBtn = button(row, "Del", C.DANGER, Color3.new(1,1,1), 13)
-    DelBtn.Size = UDim2.new(0, 56, 0, 34)
-    DelBtn.Position = UDim2.new(1, -62, 0.5, -17)
-    DelBtn.ZIndex = 20
+	local del = button(row, "Del", C.DANGER, Color3.new(1, 1, 1), 13)
+	del.Size = UDim2.new(0, 58, 0, 34)
+	del.Position = UDim2.new(1, -60, 0.5, -17)
+	del.ZIndex = 20
 
-    RunBtn.MouseButton1Click:Connect(function()
-        local ok, err = execFile(file.path)
-        if ok then
-            showToast("Running", file.name, C.SUCCESS)
-        else
-            showToast("Error", tostring(err), C.DANGER)
-        end
-    end)
+	run.MouseButton1Click:Connect(function()
+		local ok, err = safeExec(file.path)
+		if ok then
+			toast("Running", file.name, C.SUCCESS)
+		else
+			toast("Error", tostring(err), C.DANGER)
+		end
+	end)
 
-    DelBtn.MouseButton1Click:Connect(function()
-        openDeletePrompt(file.path)
-    end)
+	del.MouseButton1Click:Connect(function()
+		openDelete(file.path)
+	end)
 
-    return row
+	return row
 end
 
-local function renderFiles()
-    clearFrameChildren(FilesContainer)
-    for _, file in ipairs(FileCache) do
-        buildFileRow(FilesContainer, file, false)
-    end
-end
-
-local function refreshFiles()
-    scanFiles()
-    renderFiles()
-end
-
-RefreshBtn.MouseButton1Click:Connect(function()
-    refreshFiles()
-    showToast("Refreshed", "File list updated.", C.SUCCESS)
-end)
-
---////////////////////////////////////////////////////
+--==================================================
 -- SEARCH PAGE
---////////////////////////////////////////////////////
+--==================================================
 local SearchWrap = make("Frame", {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(1, 0, 1, 0),
-    ZIndex = 10
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 1, 0),
+	ZIndex = 10,
 }, SearchPage)
 
 local SearchBox = input(SearchWrap, "Search script name...", false, 40)
 SearchBox.Size = UDim2.new(1, -2, 0, 40)
 SearchBox.ZIndex = 20
 
-local SearchHint = label(SearchWrap, "Search only checks script names. Enter exact filename to run immediately.", 12, C.MUTED, false)
+local SearchHint = label(SearchWrap, "Search only filters file names. No auto-run here.", 12, C.MUTED, false)
 SearchHint.Position = UDim2.new(0, 2, 0, 46)
 SearchHint.Size = UDim2.new(1, -4, 0, 16)
 SearchHint.ZIndex = 12
 
 local SearchResults = make("ScrollingFrame", {
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 0, 0, 68),
-    Size = UDim2.new(1, 0, 1, -68),
-    ScrollBarThickness = 3,
-    AutomaticCanvasSize = Enum.AutomaticSize.Y,
-    CanvasSize = UDim2.new(0, 0, 0, 0),
-    ZIndex = 10
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 0, 0, 68),
+	Size = UDim2.new(1, 0, 1, -68),
+	BorderSizePixel = 0,
+	ScrollBarThickness = 4,
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	ZIndex = 10,
 }, SearchWrap)
-
-local SearchResultsLayout = make("UIListLayout", {
-    Padding = UDim.new(0, 8)
+pad(SearchResults, 0, 0, 0, 2)
+make("UIListLayout", {
+	Padding = UDim.new(0, 8),
+	SortOrder = Enum.SortOrder.LayoutOrder,
 }, SearchResults)
 
-local function renderSearchResults(query)
-    clearFrameChildren(SearchResults)
-    query = trim(query):lower()
+local function renderSearch(query)
+	clearFrame(SearchResults)
+	query = tostring(query or ""):gsub("^%s+", ""):gsub("%s+$", ""):lower()
 
-    if query == "" then
-        local empty = label(SearchResults, "Type a script name to filter results.", 13, C.MUTED, false)
-        empty.Size = UDim2.new(1, -4, 0, 24)
-        empty.ZIndex = 12
-        return
-    end
+	if query == "" then
+		local empty = label(SearchResults, "Type a script name to filter results.", 13, C.MUTED, false)
+		empty.Size = UDim2.new(1, -4, 0, 24)
+		empty.ZIndex = 12
+		return
+	end
 
-    local matches = 0
-    for _, file in ipairs(FileCache) do
-        if file.name:lower():find(query, 1, true) then
-            buildFileRow(SearchResults, file, true)
-            matches += 1
-        end
-    end
+	local matches = 0
+	for _, file in ipairs(FileCache) do
+		-- search only by script name, not content
+		if file.name:lower():find(query, 1, true) then
+			createRow(SearchResults, file)
+			matches += 1
+		end
+	end
 
-    if matches == 0 then
-        local empty = label(SearchResults, "No matching script names found.", 13, C.MUTED, false)
-        empty.Size = UDim2.new(1, -4, 0, 24)
-        empty.ZIndex = 12
-    end
+	if matches == 0 then
+		local empty = label(SearchResults, "No matching script names found.", 13, C.MUTED, false)
+		empty.Size = UDim2.new(1, -4, 0, 24)
+		empty.ZIndex = 12
+	end
 end
 
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    renderSearchResults(SearchBox.Text)
+	renderSearch(SearchBox.Text)
 end)
 
-SearchBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local path = findExactFileByName(SearchBox.Text)
-        if path then
-            local ok, err = execFile(path)
-            if ok then
-                showToast("Executed", relName(path), C.SUCCESS)
-            else
-                showToast("Error", tostring(err), C.DANGER)
-            end
-        else
-            showToast("Not Found", "Exact script name was not found.", C.DANGER)
-        end
-    end
+--==================================================
+-- FILES PAGE
+--==================================================
+local FilesTop = make("Frame", {
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 0, 44),
+	ZIndex = 10,
+}, FilesPage)
+
+local FilesTip = label(FilesTop, "Each file has its own Run and Delete buttons.", 12, C.MUTED, false)
+FilesTip.Position = UDim2.new(0, 2, 0, 0)
+FilesTip.Size = UDim2.new(1, -120, 0, 16)
+FilesTip.ZIndex = 12
+
+local FilesSub = label(FilesTop, "Refresh to load new files.", 12, C.MUTED, false)
+FilesSub.Position = UDim2.new(0, 2, 0, 18)
+FilesSub.Size = UDim2.new(1, -120, 0, 16)
+FilesSub.ZIndex = 12
+
+local FilesRefresh = button(FilesTop, "Refresh", C.ACCENT, Color3.new(1,1,1), 13)
+FilesRefresh.Size = UDim2.new(0, 88, 0, 30)
+FilesRefresh.Position = UDim2.new(1, -90, 0, 6)
+FilesRefresh.ZIndex = 20
+
+local FilesList = make("ScrollingFrame", {
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 0, 0, 48),
+	Size = UDim2.new(1, 0, 1, -48),
+	BorderSizePixel = 0,
+	ScrollBarThickness = 4,
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	ZIndex = 10,
+}, FilesPage)
+pad(FilesList, 0, 0, 0, 2)
+make("UIListLayout", {
+	Padding = UDim.new(0, 8),
+	SortOrder = Enum.SortOrder.LayoutOrder,
+}, FilesList)
+
+local function renderFiles()
+	clearFrame(FilesList)
+	for _, file in ipairs(FileCache) do
+		createRow(FilesList, file)
+	end
+end
+
+FilesRefresh.MouseButton1Click:Connect(function()
+	refreshCache()
+	renderFiles()
+	renderSearch(SearchBox.Text)
+	toast("Refreshed", "File list updated.", C.SUCCESS)
 end)
 
---////////////////////////////////////////////////////
+--==================================================
 -- MANAGE PAGE
---////////////////////////////////////////////////////
+--==================================================
 local ManageWrap = make("Frame", {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(1, 0, 1, 0),
-    ZIndex = 10
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 1, 0),
+	ZIndex = 10,
 }, ManagePage)
 
-local ManageTitle = label(ManageWrap, "Create or overwrite a script file.", 13, C.MUTED, false)
+local ManageTitle = label(ManageWrap, "Create or overwrite a file.", 13, C.MUTED, false)
 ManageTitle.Size = UDim2.new(1, -4, 0, 18)
 ManageTitle.ZIndex = 12
 
-local FileNameBox = input(ManageWrap, "filename.lua", false, 38)
-FileNameBox.Position = UDim2.new(0, 0, 0, 24)
-FileNameBox.Size = UDim2.new(1, -2, 0, 38)
-FileNameBox.ZIndex = 20
+local NameBox = input(ManageWrap, "filename.lua", false, 40)
+NameBox.Position = UDim2.new(0, 0, 0, 24)
+NameBox.Size = UDim2.new(1, 0, 0, 40)
+NameBox.ZIndex = 20
 
-local CodeBox = input(ManageWrap, "Paste code here...", true, 126)
-CodeBox.Position = UDim2.new(0, 0, 0, 72)
-CodeBox.Size = UDim2.new(1, -2, 0, 126)
-CodeBox.TextYAlignment = Enum.TextYAlignment.Top
+local CodeBox = input(ManageWrap, "Paste code here...", true, 132)
+CodeBox.Position = UDim2.new(0, 0, 0, 74)
+CodeBox.Size = UDim2.new(1, 0, 0, 132)
 CodeBox.ZIndex = 20
 
 local SaveBtn = button(ManageWrap, "Save / Overwrite", C.ACCENT, Color3.new(1,1,1), 14)
-SaveBtn.Position = UDim2.new(0, 0, 0, 208)
-SaveBtn.Size = UDim2.new(1, -2, 0, 38)
+SaveBtn.Position = UDim2.new(0, 0, 0, 216)
+SaveBtn.Size = UDim2.new(1, 0, 0, 38)
 SaveBtn.ZIndex = 20
 
-local ClearBtn = button(ManageWrap, "Clear Fields", C.SURFACE_2, C.TEXT, 14)
-ClearBtn.Position = UDim2.new(0, 0, 0, 254)
-ClearBtn.Size = UDim2.new(1, -2, 0, 34)
+local ClearBtn = button(ManageWrap, "Clear", C.SURFACE2, C.TEXT, 14)
+ClearBtn.Position = UDim2.new(0, 0, 0, 260)
+ClearBtn.Size = UDim2.new(1, 0, 0, 34)
 ClearBtn.ZIndex = 20
 
 SaveBtn.MouseButton1Click:Connect(function()
-    local fileName = ensureLuaName(FileNameBox.Text)
-    local code = CodeBox.Text or ""
+	local fileName = ensureLuaName(NameBox.Text)
+	local code = CodeBox.Text or ""
 
-    if fileName == "" then
-        showToast("Missing Name", "Enter a filename first.", C.DANGER)
-        return
-    end
+	if fileName == "" then
+		toast("Missing Name", "Enter a filename first.", C.DANGER)
+		return
+	end
 
-    local path = folderPath .. fileName
-    local ok, err = pcall(writefile, path, code)
-    if ok then
-        showToast("Saved", fileName, C.SUCCESS)
-        refreshFiles()
-    else
-        showToast("Save Failed", tostring(err), C.DANGER)
-    end
+	local path = folderPath .. fileName
+	local ok, err = pcall(writefile, path, code)
+	if ok then
+		refreshCache()
+		renderFiles()
+		renderSearch(SearchBox.Text)
+		toast("Saved", fileName, C.SUCCESS)
+	else
+		toast("Save Failed", tostring(err), C.DANGER)
+	end
 end)
 
 ClearBtn.MouseButton1Click:Connect(function()
-    FileNameBox.Text = ""
-    CodeBox.Text = ""
-    showToast("Cleared", "Input fields reset.", C.SUCCESS)
+	NameBox.Text = ""
+	CodeBox.Text = ""
+	toast("Cleared", "Fields reset.", C.SUCCESS)
 end)
 
---////////////////////////////////////////////////////
--- INITIALIZATION
---////////////////////////////////////////////////////
-refreshFiles()
-switchPage(SearchPage, "Search")
-renderSearchResults("")
+--==================================================
+-- NAV HOOKS
+--==================================================
+SearchNav.MouseButton1Click:Connect(function()
+	switchPage(SearchPage, "Search")
+	renderSearch(SearchBox.Text)
+end)
 
-showToast("Ready", "Hub loaded successfully.", C.SUCCESS)
+FilesNav.MouseButton1Click:Connect(function()
+	switchPage(FilesPage, "Files")
+end)
+
+ManageNav.MouseButton1Click:Connect(function()
+	switchPage(ManagePage, "Manage")
+end)
+
+RefreshHeaderBtn.MouseButton1Click:Connect(function()
+	refreshCache()
+	renderFiles()
+	renderSearch(SearchBox.Text)
+	toast("Refreshed", "All lists updated.", C.SUCCESS)
+end)
+
+--==================================================
+-- STARTUP
+--==================================================
+refreshCache()
+renderSearch("")
+renderFiles()
+switchPage(SearchPage, "Search")
+toast("Ready", "Hub loaded successfully.", C.SUCCESS)
