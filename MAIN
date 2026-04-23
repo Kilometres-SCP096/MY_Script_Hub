@@ -1,158 +1,129 @@
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local folderPath = "My_Script_Hub/"
-if not isfolder(folderPath) then makefolder(folderPath) end
 
--- // 1. CLEANUP // --
-for _, old in pairs(CoreGui:GetChildren()) do
-    if old.Name == "Kilometres_Final_V3" then old:Destroy() end
-end
+-- // 1. COMPLETE RESET // --
+if CoreGui:FindFirstChild("FORCED_HUB") then CoreGui.FORCED_HUB:Destroy() end
 
--- // 2. THE ROOT (Forced to Top) // --
+-- // 2. THE BASE // --
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "Kilometres_Final_V3"
-ScreenGui.DisplayOrder = 99999 -- Highest possible priority
+ScreenGui.Name = "FORCED_HUB"
+ScreenGui.DisplayOrder = 9999
+ScreenGui.IgnoreGuiInset = true
 
 -- // 3. THE TOGGLE (RAYFIELD STYLE) // --
--- This is your show/hide button. It is parented to ScreenGui, NOT the frame.
-local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Name = "HubToggle"
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0, 20, 0, 20)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ToggleBtn.Text = "K" -- K for Kilometres
-ToggleBtn.TextColor3 = Color3.fromRGB(138, 43, 226)
-ToggleBtn.TextSize = 25
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.ZIndex = 10000 -- Stays above EVERYTHING
-ToggleBtn.Draggable = true -- Move it if it blocks game buttons
-
-local TCorner = Instance.new("UICorner", ToggleBtn)
-TCorner.CornerRadius = UDim.new(1, 0) -- Makes it a circle
-local TStroke = Instance.new("UIStroke", ToggleBtn)
+local Toggle = Instance.new("TextButton", ScreenGui)
+Toggle.Size = UDim2.new(0, 55, 0, 55)
+Toggle.Position = UDim2.new(0, 15, 0, 15)
+Toggle.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Toggle.Text = "SHOW"
+Toggle.TextColor3 = Color3.fromRGB(138, 43, 226)
+Toggle.ZIndex = 1000
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
+local TStroke = Instance.new("UIStroke", Toggle)
 TStroke.Color = Color3.fromRGB(138, 43, 226)
-TStroke.Thickness = 2
+TStroke.Thickness = 3
 
--- // 4. THE MAIN WINDOW // --
+-- // 4. THE MAIN FRAME // --
 local Main = Instance.new("Frame", ScreenGui)
-Main.Name = "MainFrame"
-Main.Size = UDim2.new(0, 450, 0, 300)
-Main.Position = UDim2.new(0.5, -225, 0.5, -150)
-Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-Main.ZIndex = 1 
+Main.Name = "Container"
+Main.Size = UDim2.new(0, 460, 0, 320)
+Main.Position = UDim2.new(0.5, -230, 0.5, -160)
+Main.BackgroundColor3 = Color3.fromRGB(5, 5, 5) -- Ultra Dark
 Main.BorderSizePixel = 0
-Main.Visible = true
+Main.ZIndex = 5
+Main.Visible = true -- Starts visible so you can see it work
 
 Instance.new("UICorner", Main)
 local MStroke = Instance.new("UIStroke", Main)
 MStroke.Color = Color3.fromRGB(138, 43, 226)
 MStroke.Thickness = 2
 
--- // THE TOGGLE LOGIC // --
-ToggleBtn.MouseButton1Click:Connect(function()
+Toggle.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
--- // 5. SIDEBAR // --
+-- // 5. THE SIDEBAR // --
 local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0, 110, 1, -20)
+Sidebar.Size = UDim2.new(0, 120, 1, -20)
 Sidebar.Position = UDim2.new(0, 10, 0, 10)
 Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Sidebar.ZIndex = 2 -- Above background
+Sidebar.ZIndex = 10 
 Instance.new("UICorner", Sidebar)
 
 local SideLayout = Instance.new("UIListLayout", Sidebar)
 SideLayout.Padding = UDim.new(0, 5)
-SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SideLayout.HorizontalAlignment = "Center"
 
--- // 6. PAGES // --
-local Pages = Instance.new("Frame", Main)
-Pages.Size = UDim2.new(1, -140, 1, -20)
-Pages.Position = UDim2.new(0, 130, 0, 10)
-Pages.BackgroundTransparency = 1
-Pages.ZIndex = 2
+-- // 6. THE CONTENT AREA // --
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1, -150, 1, -20)
+Content.Position = UDim2.new(0, 140, 0, 10)
+Content.BackgroundTransparency = 1
+Content.ZIndex = 10
 
-local function AddPage(name, showFirst)
-    local Page = Instance.new("ScrollingFrame", Pages)
-    Page.Name = name .. "_Page"
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.Visible = showFirst or false
-    Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 2
-    Page.ZIndex = 5 -- Above everything else
-    Page.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+-- // 7. SCRIPT LIST (THE ACTUAL ELEMENTS) // --
+local Scroll = Instance.new("ScrollingFrame", Content)
+Scroll.Size = UDim2.new(1, 0, 1, 0)
+Scroll.BackgroundTransparency = 1
+Scroll.ZIndex = 15
+Scroll.ScrollBarThickness = 4
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.AutomaticCanvasSize = "Y"
+
+local ScrollLayout = Instance.new("UIListLayout", Scroll)
+ScrollLayout.Padding = UDim.new(0, 8)
+
+-- // 8. FORCED ELEMENT GENERATION // --
+local function AddElement(name, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Name = "ELEMENT_" .. name
+    Btn.Parent = Scroll -- Forced parenting
+    Btn.Size = UDim2.new(1, -10, 0, 45)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Btn.Text = "  " .. name
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.TextXAlignment = "Left"
+    Btn.Font = "GothamBold"
+    Btn.TextSize = 14
+    Btn.ZIndex = 50 -- EXTREMELY HIGH ZINDEX
     
-    local Layout = Instance.new("UIListLayout", Page)
-    Layout.Padding = UDim.new(0, 8)
+    Instance.new("UICorner", Btn)
+    local BStroke = Instance.new("UIStroke", Btn)
+    BStroke.Color = Color3.fromRGB(138, 43, 226)
+    BStroke.ApplyStrokeMode = "Border"
     
-    local Tab = Instance.new("TextButton", Sidebar)
-    Tab.Size = UDim2.new(0.9, 0, 0, 35)
-    Tab.Text = name
-    Tab.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Tab.ZIndex = 10 -- Sidebar buttons must be high ZIndex
-    Instance.new("UICorner", Tab)
-    
-    Tab.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
-        Page.Visible = true
-    end)
-    
-    return Page
+    Btn.MouseButton1Click:Connect(callback)
+    print("Element Created: " .. name) -- Check your F9 console!
 end
 
-local SearchP = AddPage("Search", true)
-local FilesP = AddPage("Files", false)
-
--- // 7. SEARCH CONTENT // --
-local SInput = Instance.new("TextBox", SearchP)
-SInput.Size = UDim2.new(1, -5, 0, 40)
-SInput.PlaceholderText = "Enter Name..."
-SInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-SInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-SInput.ZIndex = 20
-Instance.new("UICorner", SInput)
-
-SInput.FocusLost:Connect(function()
-    if isfile(folderPath .. SInput.Text) then
-        loadstring(readfile(folderPath .. SInput.Text))()
+-- // 9. LOAD YOUR 19+ FILES // --
+local function LoadFiles()
+    -- Clear old buttons first
+    for _, v in pairs(Scroll:GetChildren()) do
+        if v:IsA("TextButton") then v:Destroy() end
     end
+
+    if isfolder(folderPath) then
+        for _, file in pairs(listfiles(folderPath)) do
+            local cleanName = file:gsub(folderPath, "")
+            AddElement("▶️ " .. cleanName, function()
+                loadstring(readfile(file))()
+            end)
+        end
+    else
+        AddElement("❌ FOLDER NOT FOUND", function() end)
+    end
+end
+
+-- Refresh Button at the top
+AddElement("🔄 REFRESH SCRIPTS", function()
+    LoadFiles()
 end)
 
--- // 8. FILES CONTENT // --
-local function Populate()
-    for _, v in pairs(FilesP:GetChildren()) do
-        if v:IsA("TextButton") and v.Name ~= "Ref" then v:Destroy() end
-    end
-    
-    for _, file in pairs(listfiles(folderPath)) do
-        local name = file:gsub(folderPath, "")
-        local B = Instance.new("TextButton", FilesP)
-        B.Size = UDim2.new(1, -10, 0, 40)
-        B.Text = "  ▶️ " .. name
-        B.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        B.TextColor3 = Color3.fromRGB(200, 200, 200)
-        B.TextXAlignment = Enum.TextXAlignment.Left
-        B.ZIndex = 20 -- Files must be high ZIndex
-        Instance.new("UICorner", B)
-        
-        B.MouseButton1Click:Connect(function()
-            loadstring(readfile(file))()
-        end)
-    end
-end
+-- Initial Load
+LoadFiles()
 
-local Ref = Instance.new("TextButton", FilesP)
-Ref.Name = "Ref"
-Ref.Size = UDim2.new(1, -10, 0, 30)
-Ref.Text = "REFRESH LIST"
-Ref.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Ref.ZIndex = 20
-Instance.new("UICorner", Ref)
-Ref.MouseButton1Click:Connect(Populate)
-
--- // DRAG & START // --
+-- // 10. DRAG LOGIC // --
 Main.Active = true
 Main.Draggable = true
-Populate()
