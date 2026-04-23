@@ -3,421 +3,218 @@ local CoreGui = game:GetService("CoreGui")
 local folderPath = "My_Script_Hub/"
 if not isfolder(folderPath) then makefolder(folderPath) end
 
--- // CLEANUP PREVIOUS UI // --
+-- // CLEANUP // --
 if CoreGui:FindFirstChild("StrongerHub_Fixed") then
     CoreGui.StrongerHub_Fixed:Destroy()
 end
 
-wait(0.1) -- Give time for cleanup
-
--- // MAIN UI SETUP // --
-local ScreenGui = Instance.new("ScreenGui")
+-- // MAIN UI // --
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "StrongerHub_Fixed"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling   -- IMPORTANT FIX
 
--- // MAIN FRAME // --
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 500, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 450, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+MainFrame.Visible = true
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
-MainCorner.Parent = MainFrame
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(138, 43, 226)
-MainStroke.Thickness = 2
-MainStroke.Parent = MainFrame
+Instance.new("UICorner", MainFrame)
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(138, 43, 226)
+Stroke.Thickness = 2
 
 -- // TOGGLE BUTTON // --
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+ToggleButton.Size = UDim2.new(0, 45, 0, 45)
 ToggleButton.Position = UDim2.new(0, 20, 0, 20)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 ToggleButton.Text = "K"
 ToggleButton.TextColor3 = Color3.fromRGB(138, 43, 226)
 ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.TextSize = 24
-ToggleButton.Parent = ScreenGui
+ToggleButton.TextSize = 20
+ToggleButton.ZIndex = 10
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1, 0)
-ToggleCorner.Parent = ToggleButton
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = Color3.fromRGB(138, 43, 226)
-ToggleStroke.Thickness = 2
-ToggleStroke.Parent = ToggleButton
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
+local TStroke = Instance.new("UIStroke", ToggleButton)
+TStroke.Color = Color3.fromRGB(138, 43, 226)
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- // TITLE BAR // --
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-TitleBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = MainFrame
-
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 10)
-TitleCorner.Parent = TitleBar
-
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Stronger Hub"
-TitleLabel.TextColor3 = Color3.new(1, 1, 1)
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 18
-TitleLabel.Parent = TitleBar
-
 -- // SIDEBAR // --
-local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 120, 1, -50)
-Sidebar.Position = UDim2.new(0, 10, 0, 45)
-Sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Sidebar.BorderSizePixel = 0
-Sidebar.Parent = MainFrame
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 110, 1, -10)
+Sidebar.Position = UDim2.new(0, 5, 0, 5)
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Instance.new("UICorner", Sidebar)
 
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 8)
-SideCorner.Parent = Sidebar
-
-local SideLayout = Instance.new("UIListLayout")
-SideLayout.Padding = UDim.new(0, 8)
+local SideLayout = Instance.new("UIListLayout", Sidebar)
+SideLayout.Padding = UDim.new(0, 5)
 SideLayout.SortOrder = Enum.SortOrder.LayoutOrder
-SideLayout.Parent = Sidebar
+SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-local SidePadding = Instance.new("UIPadding")
-SidePadding.PaddingTop = UDim.new(0, 10)
-SidePadding.PaddingLeft = UDim.new(0, 5)
-SidePadding.PaddingRight = UDim.new(0, 5)
-SidePadding.Parent = Sidebar
+local SidePadding = Instance.new("UIPadding", Sidebar)  -- FIX
+SidePadding.PaddingTop = UDim.new(0, 8)
+SidePadding.PaddingBottom = UDim.new(0, 8)
 
 -- // PAGES CONTAINER // --
-local PagesContainer = Instance.new("Frame")
-PagesContainer.Name = "PagesContainer"
-PagesContainer.Size = UDim2.new(1, -150, 1, -50)
-PagesContainer.Position = UDim2.new(0, 140, 0, 45)
-PagesContainer.BackgroundTransparency = 1
-PagesContainer.Parent = MainFrame
+local Pages = Instance.new("Frame", MainFrame)
+Pages.Size = UDim2.new(1, -130, 1, -10)
+Pages.Position = UDim2.new(0, 120, 0, 5)
+Pages.BackgroundTransparency = 1
 
--- // CREATE PAGE FUNCTION // --
-local currentPage = nil
-
-local function CreatePage(pageName)
-    -- Create Page
-    local Page = Instance.new("ScrollingFrame")
-    Page.Name = pageName .. "Page"
+local function CreatePage(name)
+    local Page = Instance.new("ScrollingFrame", Pages)
+    Page.Name = name
     Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.Visible = false
     Page.BackgroundTransparency = 1
-    Page.BorderSizePixel = 0
     Page.ScrollBarThickness = 4
     Page.ScrollBarImageColor3 = Color3.fromRGB(138, 43, 226)
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Page.CanvasSize = UDim2.new(0,0,0,0)
     Page.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
-    Page.Visible = false
-    Page.Parent = PagesContainer
     
-    local PageLayout = Instance.new("UIListLayout")
-    PageLayout.Padding = UDim.new(0, 10)
-    PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    PageLayout.Parent = Page
+    local Layout = Instance.new("UIListLayout", Page)
+    Layout.Padding = UDim.new(0, 8)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
     
-    local PagePadding = Instance.new("UIPadding")
+    local PagePadding = Instance.new("UIPadding", Page)   -- FIX
+    PagePadding.PaddingLeft = UDim.new(0, 8)
+    PagePadding.PaddingRight = UDim.new(0, 8)
     PagePadding.PaddingTop = UDim.new(0, 5)
-    PagePadding.PaddingLeft = UDim.new(0, 5)
-    PagePadding.PaddingRight = UDim.new(0, 10)
-    PagePadding.Parent = Page
     
-    -- Create Tab Button
-    local TabButton = Instance.new("TextButton")
-    TabButton.Name = pageName .. "Tab"
-    TabButton.Size = UDim2.new(1, 0, 0, 40)
-    TabButton.Text = pageName
-    TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-    TabButton.Font = Enum.Font.Gotham
-    TabButton.TextSize = 14
-    TabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    TabButton.BorderSizePixel = 0
-    TabButton.Parent = Sidebar
+    local TabBtn = Instance.new("TextButton", Sidebar)
+    TabBtn.Size = UDim2.new(0.9, 0, 0, 35)
+    TabBtn.Text = name
+    TabBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", TabBtn)
     
-    local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 6)
-    TabCorner.Parent = TabButton
-    
-    TabButton.MouseButton1Click:Connect(function()
-        -- Hide all pages
-        for _, child in pairs(PagesContainer:GetChildren()) do
-            if child:IsA("ScrollingFrame") then
-                child.Visible = false
-            end
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, p in pairs(Pages:GetChildren()) do
+            if p:IsA("ScrollingFrame") then p.Visible = false end
         end
-        -- Show this page
         Page.Visible = true
-        currentPage = Page
-        
-        -- Update tab colors
-        for _, tab in pairs(Sidebar:GetChildren()) do
-            if tab:IsA("TextButton") then
-                tab.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-            end
-        end
-        TabButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-        TabButton.TextColor3 = Color3.new(1, 1, 1)
     end)
     
     return Page
 end
 
--- // CREATE PAGES // --
 local SearchPage = CreatePage("Search")
 local ManagePage = CreatePage("Manage")
 local FilesPage = CreatePage("Files")
-
--- Show first page by default
 SearchPage.Visible = true
-currentPage = SearchPage
 
--- // SEARCH PAGE CONTENT // --
-local SearchBox = Instance.new("TextBox")
-SearchBox.Name = "SearchBox"
-SearchBox.Size = UDim2.new(1, 0, 0, 45)
-SearchBox.PlaceholderText = "Enter filename to search..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.new(1, 1, 1)
-SearchBox.Font = Enum.Font.Gotham
-SearchBox.TextSize = 14
-SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SearchBox.BorderSizePixel = 0
-SearchBox.Parent = SearchPage
+-- // SEARCH PAGE // --
+local SearchInput = Instance.new("TextBox", SearchPage)
+SearchInput.Size = UDim2.new(1, 0, 0, 40)
+SearchInput.PlaceholderText = "Type File Name..."
+SearchInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+SearchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", SearchInput)
 
-local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 6)
-SearchCorner.Parent = SearchBox
-
-local SearchPadding = Instance.new("UIPadding")
-SearchPadding.PaddingLeft = UDim.new(0, 10)
-SearchPadding.Parent = SearchBox
-
-SearchBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and SearchBox.Text ~= "" then
-        local path = folderPath .. SearchBox.Text
-        if isfile(path) then
-            local success, err = pcall(function()
-                loadstring(readfile(path))()
-            end)
-            if success then
-                SearchBox.Text = ""
-                SearchBox.PlaceholderText = "File executed successfully!"
-                wait(2)
-                SearchBox.PlaceholderText = "Enter filename to search..."
-            else
-                warn("Error executing file:", err)
-            end
-        else
-            SearchBox.PlaceholderText = "File not found!"
-            wait(2)
-            SearchBox.PlaceholderText = "Enter filename to search..."
-        end
+SearchInput.FocusLost:Connect(function()
+    local path = folderPath .. SearchInput.Text
+    if isfile(path) then
+        loadstring(readfile(path))()
     end
 end)
 
--- // MANAGE PAGE CONTENT // --
-local NameInput = Instance.new("TextBox")
-NameInput.Name = "NameInput"
-NameInput.Size = UDim2.new(1, 0, 0, 45)
-NameInput.PlaceholderText = "Filename (e.g., myscript.lua)"
-NameInput.Text = ""
-NameInput.TextColor3 = Color3.new(1, 1, 1)
-NameInput.Font = Enum.Font.Gotham
-NameInput.TextSize = 14
-NameInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-NameInput.BorderSizePixel = 0
-NameInput.Parent = ManagePage
+-- // MANAGE PAGE // --
+local function CreateManageInput(placeholder)
+    local box = Instance.new("TextBox", ManagePage)
+    box.Size = UDim2.new(1, 0, 0, 35)
+    box.PlaceholderText = placeholder
+    box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.ClearTextOnFocus = false
+    Instance.new("UICorner", box)
+    return box
+end
 
-local NameCorner = Instance.new("UICorner")
-NameCorner.CornerRadius = UDim.new(0, 6)
-NameCorner.Parent = NameInput
+local NameIn = CreateManageInput("filename.lua")
+local CodeIn = CreateManageInput("Paste Code Here...")
 
-local NamePadding = Instance.new("UIPadding")
-NamePadding.PaddingLeft = UDim.new(0, 10)
-NamePadding.Parent = NameInput
+local SaveBtn = Instance.new("TextButton", ManagePage)
+SaveBtn.Size = UDim2.new(1, 0, 0, 35)
+SaveBtn.Text = "SAVE TO WORKSPACE"
+SaveBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+SaveBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", SaveBtn)
 
-local CodeInput = Instance.new("TextBox")
-CodeInput.Name = "CodeInput"
-CodeInput.Size = UDim2.new(1, 0, 0, 120)
-CodeInput.PlaceholderText = "Paste your script here..."
-CodeInput.Text = ""
-CodeInput.TextColor3 = Color3.new(1, 1, 1)
-CodeInput.Font = Enum.Font.Code
-CodeInput.TextSize = 12
-CodeInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-CodeInput.BorderSizePixel = 0
-CodeInput.MultiLine = true
-CodeInput.TextWrapped = true
-CodeInput.TextXAlignment = Enum.TextXAlignment.Left
-CodeInput.TextYAlignment = Enum.TextYAlignment.Top
-CodeInput.ClearTextOnFocus = false
-CodeInput.Parent = ManagePage
-
-local CodeCorner = Instance.new("UICorner")
-CodeCorner.CornerRadius = UDim.new(0, 6)
-CodeCorner.Parent = CodeInput
-
-local CodePadding = Instance.new("UIPadding")
-CodePadding.PaddingLeft = UDim.new(0, 10)
-CodePadding.PaddingTop = UDim.new(0, 10)
-CodePadding.Parent = CodeInput
-
-local SaveButton = Instance.new("TextButton")
-SaveButton.Name = "SaveButton"
-SaveButton.Size = UDim2.new(1, 0, 0, 45)
-SaveButton.Text = "💾 SAVE FILE"
-SaveButton.TextColor3 = Color3.new(1, 1, 1)
-SaveButton.Font = Enum.Font.GothamBold
-SaveButton.TextSize = 16
-SaveButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-SaveButton.BorderSizePixel = 0
-SaveButton.Parent = ManagePage
-
-local SaveCorner = Instance.new("UICorner")
-SaveCorner.CornerRadius = UDim.new(0, 6)
-SaveCorner.Parent = SaveButton
-
-SaveButton.MouseButton1Click:Connect(function()
-    if NameInput.Text ~= "" and CodeInput.Text ~= "" then
-        writefile(folderPath .. NameInput.Text, CodeInput.Text)
-        NameInput.Text = ""
-        CodeInput.Text = ""
-        SaveButton.Text = "✅ FILE SAVED!"
-        wait(1.5)
-        SaveButton.Text = "💾 SAVE FILE"
+SaveBtn.MouseButton1Click:Connect(function()
+    if NameIn.Text ~= "" then
+        writefile(folderPath .. NameIn.Text, CodeIn.Text)
     end
 end)
 
--- // FILES PAGE CONTENT // --
-local RefreshButton = Instance.new("TextButton")
-RefreshButton.Name = "RefreshButton"
-RefreshButton.Size = UDim2.new(1, 0, 0, 45)
-RefreshButton.Text = "🔄 REFRESH FILES"
-RefreshButton.TextColor3 = Color3.new(1, 1, 1)
-RefreshButton.Font = Enum.Font.GothamBold
-RefreshButton.TextSize = 16
-RefreshButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-RefreshButton.BorderSizePixel = 0
-RefreshButton.LayoutOrder = 0
-RefreshButton.Parent = FilesPage
-
-local RefreshCorner = Instance.new("UICorner")
-RefreshCorner.CornerRadius = UDim.new(0, 6)
-RefreshCorner.Parent = RefreshButton
-
-local function RefreshFileList()
-    -- Remove old file buttons
-    for _, child in pairs(FilesPage:GetChildren()) do
-        if child:IsA("TextButton") and child.Name ~= "RefreshButton" then
-            child:Destroy()
+-- // FILES PAGE // --
+local function RefreshList()
+    -- Don't destroy the refresh button
+    for _, v in pairs(FilesPage:GetChildren()) do
+        if v:IsA("TextButton") and v.Name ~= "RefreshBtn" then 
+            v:Destroy() 
         end
     end
     
-    -- Add file buttons
-    local files = listfiles(folderPath)
-    for i, filepath in pairs(files) do
-        local filename = filepath:gsub(folderPath, "")
+    for _, file in pairs(listfiles(folderPath)) do
+        local name = file:gsub(folderPath, "")
+        local Btn = Instance.new("TextButton", FilesPage)
+        Btn.Size = UDim2.new(1, 0, 0, 35)
+        Btn.Text = "▶️ " .. name
+        Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        Btn.TextXAlignment = Enum.TextXAlignment.Left
+        Instance.new("UICorner", Btn)
         
-        local FileButton = Instance.new("TextButton")
-        FileButton.Name = "File_" .. i
-        FileButton.Size = UDim2.new(1, 0, 0, 40)
-        FileButton.Text = "▶ " .. filename
-        FileButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-        FileButton.Font = Enum.Font.Gotham
-        FileButton.TextSize = 13
-        FileButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        FileButton.BorderSizePixel = 0
-        FileButton.TextXAlignment = Enum.TextXAlignment.Left
-        FileButton.LayoutOrder = i
-        FileButton.Parent = FilesPage
-        
-        local FileCorner = Instance.new("UICorner")
-        FileCorner.CornerRadius = UDim.new(0, 6)
-        FileCorner.Parent = FileButton
-        
-        local FilePadding = Instance.new("UIPadding")
-        FilePadding.PaddingLeft = UDim.new(0, 10)
-        FilePadding.Parent = FileButton
-        
-        FileButton.MouseButton1Click:Connect(function()
-            local success, err = pcall(function()
-                loadstring(readfile(filepath))()
-            end)
-            if not success then
-                warn("Error running file:", err)
-            end
+        Btn.MouseButton1Click:Connect(function()
+            loadstring(readfile(file))()
         end)
     end
 end
 
-RefreshButton.MouseButton1Click:Connect(RefreshFileList)
+local RefBtn = Instance.new("TextButton", FilesPage)
+RefBtn.Name = "RefreshBtn"
+RefBtn.Size = UDim2.new(1, 0, 0, 35)
+RefBtn.Text = "🔄 REFRESH LIST"
+RefBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+RefBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", RefBtn)
+RefBtn.MouseButton1Click:Connect(RefreshList)
 
--- // DRAG FUNCTIONALITY // --
-local function MakeDraggable(frame)
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-
-    frame.InputBegan:Connect(function(input)
+-- // DRAG // --
+local function MakeDraggable(gui)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = frame.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+            startPos = gui.Position
         end
     end)
-
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then 
+            dragInput = input 
         end
     end)
-
     UIS.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            update(input)
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+            dragging = false 
         end
     end)
 end
 
 MakeDraggable(MainFrame)
-MakeDraggable(ToggleButton)
+RefreshList()
 
--- Initial file list load
-RefreshFileList()
-
-print("✅ Stronger Hub loaded successfully!")
+print("StrongerHub Fixed - Loaded!")
