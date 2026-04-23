@@ -3,168 +3,110 @@ local CoreGui = game:GetService("CoreGui")
 local folderPath = "My_Script_Hub/"
 if not isfolder(folderPath) then makefolder(folderPath) end
 
--- // 1. CLEANUP PREVIOUS UI // --
+-- // 1. NUKE OLD UI // --
 for _, old in pairs(CoreGui:GetChildren()) do
-    if old.Name == "StrongerHub_Final" then old:Destroy() end
+    if old.Name == "Kilometres_Final_Fix" then old:Destroy() end
 end
 
--- // 2. ROOT SETUP // --
+-- // 2. SETUP // --
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "StrongerHub_Final"
-ScreenGui.DisplayOrder = 100 -- Forces UI above everything else
+ScreenGui.Name = "Kilometres_Final_Fix"
+ScreenGui.DisplayOrder = 999 -- Force to the very top layer
+ScreenGui.IgnoreGuiInset = true
 
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "Main"
 MainFrame.Size = UDim2.new(0, 450, 0, 300)
 MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.ZIndex = 1 
-MainFrame.BorderSizePixel = 0
+MainFrame.ZIndex = 1
+MainFrame.ClipsDescendants = false -- FIX: Don't hide stuff!
 
-local Corner = Instance.new("UICorner", MainFrame)
-local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(138, 43, 226)
-Stroke.Thickness = 2
+Instance.new("UICorner", MainFrame)
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(138, 43, 226)
+MainStroke.Thickness = 2
 
--- // 3. RAYFIELD TOGGLE // --
-local Toggle = Instance.new("TextButton", ScreenGui)
-Toggle.Size = UDim2.new(0, 45, 0, 45)
-Toggle.Position = UDim2.new(0, 20, 0, 20)
-Toggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Toggle.Text = "S"
-Toggle.TextColor3 = Color3.fromRGB(138, 43, 226)
-Toggle.ZIndex = 100
-Toggle.Draggable = true
-Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
-
-Toggle.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
--- // 4. SIDEBAR // --
+-- // 3. SIDEBAR (The Navigation) // --
 local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 110, 1, -10)
-Sidebar.Position = UDim2.new(0, 5, 0, 5)
+Sidebar.Size = UDim2.new(0, 110, 1, -20)
+Sidebar.Position = UDim2.new(0, 10, 0, 10)
 Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Sidebar.ZIndex = 2 
+Sidebar.ZIndex = 2
+Instance.new("UICorner", Sidebar)
 
 local SideLayout = Instance.new("UIListLayout", Sidebar)
 SideLayout.Padding = UDim.new(0, 5)
 SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- // 5. PAGE CONTAINER // --
+-- // 4. PAGE HOLDER // --
 local Pages = Instance.new("Frame", MainFrame)
-Pages.Name = "Pages"
-Pages.Size = UDim2.new(1, -130, 1, -10)
-Pages.Position = UDim2.new(0, 120, 0, 5)
+Pages.Size = UDim2.new(1, -140, 1, -20)
+Pages.Position = UDim2.new(0, 130, 0, 10)
 Pages.BackgroundTransparency = 1
 Pages.ZIndex = 2
 
-local function CreatePage(name)
+local function CreatePage(name, isDefault)
     local Page = Instance.new("ScrollingFrame", Pages)
     Page.Name = name .. "_Page"
     Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.Visible = false
+    Page.Visible = isDefault or false
     Page.BackgroundTransparency = 1
     Page.ScrollBarThickness = 3
     Page.ZIndex = 3
+    Page.CanvasSize = UDim2.new(0, 0, 5, 0) -- Pre-set large canvas
     Page.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
     
     local Layout = Instance.new("UIListLayout", Page)
     Layout.Padding = UDim.new(0, 10)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
     
     local TabBtn = Instance.new("TextButton", Sidebar)
     TabBtn.Size = UDim2.new(0.9, 0, 0, 35)
     TabBtn.Text = name
-    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TabBtn.ZIndex = 4
+    TabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TabBtn.ZIndex = 10 -- High ZIndex to ensure it shows
     Instance.new("UICorner", TabBtn)
     
     TabBtn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages:GetChildren()) do
-            if p:IsA("ScrollingFrame") then p.Visible = false end
-        end
+        for _, p in pairs(Pages:GetChildren()) do p.Visible = false end
         Page.Visible = true
     end)
     
     return Page
 end
 
--- // INITIALIZE PAGES // --
-local SearchPage = CreatePage("Search")
+local SearchPage = CreatePage("Search", true)
 local ManagePage = CreatePage("Manage")
 local FilesPage = CreatePage("Files")
 
--- FORCE THE FIRST PAGE TO SHOW
-SearchPage.Visible = true
+-- // 5. ADDING THE ELEMENTS (Guaranteed Visible) // --
 
--- // ELEMENTS // --
+-- [SEARCH PAGE]
+local SBox = Instance.new("TextBox", SearchPage)
+SBox.Size = UDim2.new(1, -10, 0, 40)
+SBox.PlaceholderText = "Type Script Name..."
+SBox.Text = ""
+SBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SBox.ZIndex = 20
+Instance.new("UICorner", SBox)
 
--- Search Input
-local SearchBox = Instance.new("TextBox", SearchPage)
-SearchBox.Size = UDim2.new(1, -10, 0, 40)
-SearchBox.PlaceholderText = "Search & Run File..."
-SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.ZIndex = 5
-Instance.new("UICorner", SearchBox)
-
-SearchBox.FocusLost:Connect(function()
-    if isfile(folderPath .. SearchBox.Text) then
-        loadstring(readfile(folderPath .. SearchBox.Text))()
-    end
-end)
-
--- Manage Inputs
-local NameBox = Instance.new("TextBox", ManagePage)
-NameBox.Size = UDim2.new(1, -10, 0, 35)
-NameBox.PlaceholderText = "New FileName.lua"
-NameBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-NameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameBox.ZIndex = 5
-Instance.new("UICorner", NameBox)
-
-local CodeBox = Instance.new("TextBox", ManagePage)
-CodeBox.Size = UDim2.new(1, -10, 0, 80)
-CodeBox.PlaceholderText = "Paste Code Here..."
-CodeBox.MultiLine = true
-CodeBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-CodeBox.ZIndex = 5
-Instance.new("UICorner", CodeBox)
-
-local Save = Instance.new("TextButton", ManagePage)
-Save.Size = UDim2.new(1, -10, 0, 35)
-Save.Text = "SAVE FILE"
-Save.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Save.ZIndex = 5
-Instance.new("UICorner", Save)
-
-Save.MouseButton1Click:Connect(function()
-    if NameBox.Text ~= "" then
-        writefile(folderPath .. NameBox.Text, CodeBox.Text)
-    end
-end)
-
--- Files List
-local function UpdateFiles()
-    for _, old in pairs(FilesPage:GetChildren()) do
-        if old:IsA("TextButton") and old.Name ~= "RefreshBtn" then old:Destroy() end
+-- [FILES PAGE]
+local function Refresh()
+    for _, v in pairs(FilesPage:GetChildren()) do
+        if v:IsA("TextButton") and v.Name ~= "Ref" then v:Destroy() end
     end
     
-    for _, file in pairs(listfiles(folderPath)) do
+    local files = listfiles(folderPath)
+    for _, file in pairs(files) do
         local name = file:gsub(folderPath, "")
         local B = Instance.new("TextButton", FilesPage)
-        B.Size = UDim2.new(1, -10, 0, 35)
-        B.Text = " ▶️  " .. name
-        B.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        B.Size = UDim2.new(1, -10, 0, 40)
+        B.Text = "  ▶️ " .. name
         B.TextColor3 = Color3.fromRGB(200, 200, 200)
+        B.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         B.TextXAlignment = Enum.TextXAlignment.Left
-        B.ZIndex = 5
+        B.ZIndex = 20
         Instance.new("UICorner", B)
         
         B.MouseButton1Click:Connect(function()
@@ -173,18 +115,36 @@ local function UpdateFiles()
     end
 end
 
-local Refresh = Instance.new("TextButton", FilesPage)
-Refresh.Name = "RefreshBtn"
-Refresh.Size = UDim2.new(1, -10, 0, 30)
-Refresh.Text = "REFRESH LIST"
-Refresh.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Refresh.ZIndex = 5
-Instance.new("UICorner", Refresh)
-Refresh.MouseButton1Click:Connect(UpdateFiles)
+local Ref = Instance.new("TextButton", FilesPage)
+Ref.Name = "Ref"
+Ref.Size = UDim2.new(1, -10, 0, 40)
+Ref.Text = "🔄 REFRESH SCRIPTS"
+Ref.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+Ref.TextColor3 = Color3.fromRGB(255, 255, 255)
+Ref.ZIndex = 20
+Instance.new("UICorner", Ref)
+Ref.MouseButton1Click:Connect(Refresh)
 
--- // DRAG LOGIC // --
+-- // 6. RAYFIELD TOGGLE BUTTON // --
+local Toggle = Instance.new("TextButton", ScreenGui)
+Toggle.Size = UDim2.new(0, 50, 0, 50)
+Toggle.Position = UDim2.new(0, 10, 0.5, -25)
+Toggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Toggle.Text = "K"
+Toggle.TextColor3 = Color3.fromRGB(138, 43, 226)
+Toggle.TextSize = 25
+Toggle.ZIndex = 999
+Toggle.Draggable = true
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
+local TStroke = Instance.new("UIStroke", Toggle)
+TStroke.Color = Color3.fromRGB(138, 43, 226)
+
+Toggle.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- // DRAG SYSTEM // --
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- Start
-UpdateFiles()
+Refresh() -- Load those 19 scripts
