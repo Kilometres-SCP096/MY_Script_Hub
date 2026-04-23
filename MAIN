@@ -4,39 +4,38 @@ local folderPath = "My_Script_Hub/"
 if not isfolder(folderPath) then makefolder(folderPath) end
 
 -- // 1. CLEANUP // --
-for _, old in pairs(CoreGui:GetChildren()) do
-    if old.Name == "StrongerHub_Final" then old:Destroy() end
+if CoreGui:FindFirstChild("StrongerHub_Final") then
+    CoreGui.StrongerHub_Final:Destroy()
 end
 
 -- // 2. ROOT SETUP // --
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "StrongerHub_Final"
-ScreenGui.DisplayOrder = 1000 -- Increased to stay above all game UI
-ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 100 
+ScreenGui.IgnoreGuiInset = true -- Prevents Roblox top bar from shifting it
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "Main"
 MainFrame.Size = UDim2.new(0, 450, 0, 300)
 MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.ZIndex = 1 
+MainFrame.ZIndex = 1 -- Background is lowest
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = true
 
 local Corner = Instance.new("UICorner", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(138, 43, 226) -- Neon Purple
+Stroke.Color = Color3.fromRGB(138, 43, 226)
 Stroke.Thickness = 2
 
--- // 3. REPAIRED RAYFIELD TOGGLE // --
+-- // 3. RAYFIELD TOGGLE (FIXED VISIBILITY) // --
 local Toggle = Instance.new("TextButton", ScreenGui)
-Toggle.Name = "HubToggle"
-Toggle.Size = UDim2.new(0, 45, 0, 45)
+Toggle.Size = UDim2.new(0, 50, 0, 50)
 Toggle.Position = UDim2.new(0, 20, 0, 20)
 Toggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Toggle.Text = "S"
 Toggle.TextColor3 = Color3.fromRGB(138, 43, 226)
-Toggle.ZIndex = 1000 -- Absolute top layer
+Toggle.TextSize = 20
+Toggle.ZIndex = 1000 -- Highest layer
 Toggle.Draggable = true
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", Toggle)
@@ -52,7 +51,7 @@ Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, 110, 1, -10)
 Sidebar.Position = UDim2.new(0, 5, 0, 5)
 Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Sidebar.ZIndex = 2 
+Sidebar.ZIndex = 5 -- Above MainFrame
 
 local SideLayout = Instance.new("UIListLayout", Sidebar)
 SideLayout.Padding = UDim.new(0, 5)
@@ -64,7 +63,7 @@ Pages.Name = "Pages"
 Pages.Size = UDim2.new(1, -130, 1, -10)
 Pages.Position = UDim2.new(0, 120, 0, 5)
 Pages.BackgroundTransparency = 1
-Pages.ZIndex = 2
+Pages.ZIndex = 5
 
 local function CreatePage(name)
     local Page = Instance.new("ScrollingFrame", Pages)
@@ -73,7 +72,7 @@ local function CreatePage(name)
     Page.Visible = false
     Page.BackgroundTransparency = 1
     Page.ScrollBarThickness = 3
-    Page.ZIndex = 3
+    Page.ZIndex = 10 -- Above Sidebar/Pages frame
     Page.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
     Page.CanvasSize = UDim2.new(0, 0, 0, 0)
     
@@ -86,7 +85,7 @@ local function CreatePage(name)
     TabBtn.Text = name
     TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TabBtn.ZIndex = 5 -- Repair: Raised ZIndex
+    TabBtn.ZIndex = 15 -- Clickable layer
     Instance.new("UICorner", TabBtn)
     
     TabBtn.MouseButton1Click:Connect(function()
@@ -99,14 +98,14 @@ local function CreatePage(name)
     return Page
 end
 
+-- // INITIALIZE PAGES // --
 local SearchPage = CreatePage("Search")
 local ManagePage = CreatePage("Manage")
 local FilesPage = CreatePage("Files")
 
--- Force start page
-SearchPage.Visible = true
+SearchPage.Visible = true -- Force default
 
--- // 6. REPAIRED ELEMENTS // --
+-- // 6. ELEMENTS (FIXED ZINDEX) // --
 
 -- Search Input
 local SearchBox = Instance.new("TextBox", SearchPage)
@@ -114,8 +113,14 @@ SearchBox.Size = UDim2.new(1, -10, 0, 40)
 SearchBox.PlaceholderText = "Search & Run File..."
 SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.ZIndex = 10 -- Repair: Increased visibility
+SearchBox.ZIndex = 20 -- Elements must be higher than ScrollingFrame
 Instance.new("UICorner", SearchBox)
+
+SearchBox.FocusLost:Connect(function()
+    if isfile(folderPath .. SearchBox.Text) then
+        loadstring(readfile(folderPath .. SearchBox.Text))()
+    end
+end)
 
 -- Manage Inputs
 local NameBox = Instance.new("TextBox", ManagePage)
@@ -123,7 +128,7 @@ NameBox.Size = UDim2.new(1, -10, 0, 35)
 NameBox.PlaceholderText = "New FileName.lua"
 NameBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 NameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameBox.ZIndex = 10
+NameBox.ZIndex = 20
 Instance.new("UICorner", NameBox)
 
 local CodeBox = Instance.new("TextBox", ManagePage)
@@ -132,14 +137,14 @@ CodeBox.PlaceholderText = "Paste Code Here..."
 CodeBox.MultiLine = true
 CodeBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-CodeBox.ZIndex = 10
+CodeBox.ZIndex = 20
 Instance.new("UICorner", CodeBox)
 
 local Save = Instance.new("TextButton", ManagePage)
 Save.Size = UDim2.new(1, -10, 0, 35)
 Save.Text = "SAVE FILE"
 Save.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Save.ZIndex = 10
+Save.ZIndex = 20
 Instance.new("UICorner", Save)
 
 Save.MouseButton1Click:Connect(function()
@@ -148,7 +153,7 @@ Save.MouseButton1Click:Connect(function()
     end
 end)
 
--- Files List Repair
+-- Files List
 local function UpdateFiles()
     for _, old in pairs(FilesPage:GetChildren()) do
         if old:IsA("TextButton") and old.Name ~= "RefreshBtn" then old:Destroy() end
@@ -162,7 +167,7 @@ local function UpdateFiles()
         B.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         B.TextColor3 = Color3.fromRGB(200, 200, 200)
         B.TextXAlignment = Enum.TextXAlignment.Left
-        B.ZIndex = 10
+        B.ZIndex = 25
         Instance.new("UICorner", B)
         
         B.MouseButton1Click:Connect(function()
@@ -176,13 +181,12 @@ Refresh.Name = "RefreshBtn"
 Refresh.Size = UDim2.new(1, -10, 0, 30)
 Refresh.Text = "REFRESH LIST"
 Refresh.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-Refresh.ZIndex = 10
+Refresh.ZIndex = 25
 Instance.new("UICorner", Refresh)
 Refresh.MouseButton1Click:Connect(UpdateFiles)
 
--- // DRAG LOGIC // --
+-- // 7. DRAG LOGIC // --
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- Start Task
-task.spawn(UpdateFiles)
+UpdateFiles()
